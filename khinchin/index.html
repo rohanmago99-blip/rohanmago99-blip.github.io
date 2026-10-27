@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>The 2.685 Trick</title>
+<title>The Envelope Trick</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rye&family=Nunito:wght@400;700;900&family=JetBrains+Mono:wght@500;700&display=swap">
 <style>
@@ -84,6 +84,13 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--blue);outline-o
 .readout .st b{color:var(--chalk)}
 #verdict{font-family:var(--display);font-size:clamp(18px,2.1vw,30px);color:var(--gold);margin-top:6px;min-height:1.3em;line-height:1.2}
 
+/* finish banner */
+#finish{position:fixed;inset:0;z-index:9;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;background:rgba(14,9,20,.93);text-align:center;padding:24px;cursor:pointer}
+#finish .fin1,#finish .fin2{font-family:var(--display);color:var(--gold);line-height:1;text-shadow:0 3px 0 #6b4a0e,0 0 40px rgba(233,189,85,.5)}
+#finish .fin1{font-size:clamp(40px,8vw,120px)}#finish .fin2{font-size:clamp(40px,8vw,120px);color:var(--chalk);text-shadow:0 3px 0 #000}
+#finish .fin3{font-family:var(--mono);font-weight:700;font-size:clamp(28px,4.5vw,70px);color:var(--muted);margin-top:18px;letter-spacing:.04em}
+#finish .fin3 b{color:var(--gold2)}
+#finish .fin4{color:var(--muted);font-weight:700;font-size:15px;margin-top:22px;letter-spacing:.08em;text-transform:uppercase}
 /* flash + confetti */
 #flash{position:fixed;inset:0;background:var(--gold);opacity:0;pointer-events:none;z-index:8}
 #flash.on{animation:flash .9s ease-out}
@@ -97,9 +104,10 @@ kbd{font-family:var(--mono);font-size:.9em;background:rgba(255,255,255,.1);borde
 <body>
 <div class="curtain l"></div><div class="curtain r"></div>
 <div id="flash"></div><canvas id="confetti"></canvas>
+<div id="finish" hidden><div class="fin1">LOOK BEHIND YOU</div><div class="fin2">AND OPEN</div><div class="fin3" id="finnum"></div><div class="fin4">press any key to go on</div></div>
 <div id="app">
   <header>
-    <div><h1>The 2.685 Trick</h1><div class="sub">one number. any number.</div></div>
+    <div><h1>The Envelope Trick</h1><div class="sub">one number. any number.</div></div>
     <div class="sub" id="status">waiting for your number</div>
   </header>
 
@@ -119,8 +127,8 @@ kbd{font-family:var(--mono);font-size:.9em;background:rgba(255,255,255,.1);borde
       </div>
     </div>
     <div class="panel envwrap">
-      <div class="envelope" id="env"><div class="body"></div><div class="paper">2.685</div><div class="cover"></div><div class="flap"></div><div class="seal">SEALED</div></div>
-      <div class="envcap">my prediction, written before class</div>
+      <div class="envelope" id="env"><div class="body"></div><div class="cover"></div><div class="flap"></div><div class="seal">SEALED</div></div>
+      <div class="envcap">my prediction. sealed before class.</div>
     </div>
   </section>
 
@@ -139,13 +147,13 @@ kbd{font-family:var(--mono);font-size:.9em;background:rgba(255,255,255,.1);borde
     </div>
   </section>
 
-  <footer><span><kbd>Enter</kbd> run · <kbd>F</kbd> fullscreen · <kbd>R</kbd> start over</span><span>cube roots computed exactly to 3,000 digits in your browser</span></footer>
+  <footer><span><kbd>Enter</kbd> run · <kbd>F</kbd> fullscreen · <kbd>R</kbd> start over</span><span>computed exactly, to 3,000 digits, in your browser</span></footer>
 </div>
 
 <script>
 (function(){
 const $=s=>document.querySelector(s);
-const K=2.6854520010;
+const K=2.6854520010; // Khinchin's constant (never shown before the finish)
 const DIGITS=3000;           // decimal digits of the root we compute
 const MAXTERMS=2600;         // continued-fraction terms we keep
 let state=null, animId=0, confettiId=0;
@@ -192,15 +200,15 @@ function runningMeans(cf){const gm=[];let s=0;for(let i=0;i<cf.length;i++){s+=Ma
 // ---------- drawing ----------
 const cv=$('#chart'),ctx=cv.getContext('2d');
 function sizeChart(){const w=cv.clientWidth,h=cv.clientHeight;if(w>10&&h>10&&(cv.width!==w||cv.height!==h)){cv.width=w;cv.height=h}}
-function drawChart(gm,upto,hitAt,N){
+function drawChart(gm,upto,hitAt,N,showTarget){
   sizeChart();const W=cv.width,H=cv.height;ctx.clearRect(0,0,W,H);
   const pad={l:46,r:16,t:16,b:28},y0=1,y1=4;const n=Math.max(N,10);
   const X=i=>pad.l+(i/n)*(W-pad.l-pad.r),Y=v=>pad.t+(1-(Math.min(Math.max(v,y0),y1)-y0)/(y1-y0))*(H-pad.t-pad.b);
   ctx.strokeStyle='rgba(255,255,255,.12)';ctx.lineWidth=1;[1,2,3,4].forEach(v=>{ctx.beginPath();ctx.moveTo(pad.l,Y(v));ctx.lineTo(W-pad.r,Y(v));ctx.stroke()});
   ctx.fillStyle='#b9a98f';ctx.font='700 14px Nunito, system-ui, sans-serif';ctx.textAlign='right';[1,2,3,4].forEach(v=>ctx.fillText(v,pad.l-10,Y(v)+5));
   ctx.textAlign='center';ctx.fillText('steps →',(pad.l+W-pad.r)/2,H-7);
-  ctx.setLineDash([8,7]);ctx.strokeStyle='#ff5a4e';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(pad.l,Y(K));ctx.lineTo(W-pad.r,Y(K));ctx.stroke();ctx.setLineDash([]);
-  ctx.textAlign='left';ctx.fillStyle='#ff5a4e';ctx.font='900 15px Nunito, system-ui, sans-serif';ctx.fillText('2.685',pad.l+8,Y(K)-8);
+  if(showTarget){ctx.setLineDash([8,7]);ctx.strokeStyle='#ff5a4e';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(pad.l,Y(K));ctx.lineTo(W-pad.r,Y(K));ctx.stroke();ctx.setLineDash([]);
+  ctx.textAlign='left';ctx.fillStyle='#ff5a4e';ctx.font='900 15px Nunito, system-ui, sans-serif';ctx.fillText(K.toFixed(3),pad.l+8,Y(K)-8)}
   if(upto>0){ctx.strokeStyle='#6ea8ff';ctx.lineWidth=2.5;ctx.lineJoin='round';ctx.beginPath();for(let i=0;i<upto;i++){const x=X(i+1),y=Y(gm[i]);i?ctx.lineTo(x,y):ctx.moveTo(x,y)}ctx.stroke();
     if(hitAt>=0&&upto>hitAt){const x=X(hitAt+1),y=Y(gm[hitAt]);ctx.fillStyle='#e9bd55';ctx.beginPath();ctx.arc(x,y,8,0,Math.PI*2);ctx.fill();ctx.strokeStyle='#17111f';ctx.lineWidth=2;ctx.stroke()}
     const x=X(upto),y=Y(gm[upto-1]);ctx.fillStyle='#6ea8ff';ctx.beginPath();ctx.arc(x,y,6,0,Math.PI*2);ctx.fill()}
@@ -217,7 +225,7 @@ function confetti(){cancelAnimationFrame(confettiId);cc.width=innerWidth;cc.heig
 // ---------- the show ----------
 const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
 function setStatus(t){$('#status').textContent=t}
-function reset(){cancelAnimationFrame(animId);state=null;$('#env').classList.remove('open');$('#digits').textContent='';$('#terms').textContent='';$('#count').textContent='';$('#gm').textContent='—';$('#gm').classList.remove('hit');$('#gst').textContent='';$('#verdict').textContent='';$('#msg').textContent='';$('#xlabel').textContent='';$('#again').hidden=true;$('#cheat').hidden=true;$('#more').hidden=true;$('#go').disabled=false;drawChart([],0,-1,10);setStatus('waiting for your number');$('#num').focus()}
+function reset(){cancelAnimationFrame(animId);state=null;$('#env').classList.remove('open');$('#digits').textContent='';$('#terms').textContent='';$('#count').textContent='';$('#gm').textContent='—';$('#gm').classList.remove('hit');$('#gst').textContent='';$('#verdict').textContent='';$('#msg').textContent='';$('#xlabel').textContent='';$('#again').hidden=true;$('#cheat').hidden=true;$('#more').hidden=true;$('#go').disabled=false;$('#finish').hidden=true;drawChart([],0,-1,10,false);setStatus('waiting for your number');$('#num').focus()}
 
 function run(kind){
   const parsed=parseNum($('#num').value);
@@ -239,7 +247,7 @@ function run(kind){
     if(r.terminated||cf.length<40){ // rational root: the list stops
       $('#terms').innerHTML=r.terms.map((t,i)=>`<span class="t${i&&t===1n?' one':''}">${t}</span>`).join('')+'<span class="t" style="color:var(--red)">STOP.</span>';
       $('#count').innerHTML=`the list <b>ends</b> after ${r.terms.length} numbers`;
-      $('#verdict').textContent=kind==='sqrt'?'A perfect square. The list just stops. No 2.685 for this one.':'That number is a perfect cube. The list just stops, so there\'s nothing to squish. Give me another one.';
+      $('#verdict').textContent=kind==='sqrt'?'A perfect square. The list just stops. Nothing to squish.':'That number is a perfect cube. The list just stops, so there\'s nothing to squish. Give me another one.';
       $('#gm').textContent='—';$('#go').disabled=false;setStatus('the list stopped');return;
     }
     animate();
@@ -266,13 +274,15 @@ function animate(){
     const t2=now-state.t2;let p=T2?Math.min(1,t2/T2):1;p=1-Math.pow(1-p,2.6);
     let upto=Math.max(1,Math.round(p*N));
     if(!hitShown&&hitAt>=0&&upto>hitAt){upto=hitAt+1}
-    drawChart(gm,upto,hitShown?hitAt:-1,N);
-    gmEl.textContent=gm[upto-1].toFixed(3);gst.innerHTML=`after <b>${upto.toLocaleString()}</b> steps`;
+    drawChart(gm,upto,hitShown?hitAt:-1,N,hitShown);
+    gmEl.textContent=state.finished?gm[upto-1].toFixed(3):'…';gst.innerHTML=`after <b>${upto.toLocaleString()}</b> steps`;
     if(!hitShown&&hitAt>=0&&upto>=hitAt+1){
-      hitShown=true;gmEl.classList.add('hit');gmEl.textContent='2.685';
-      $('#env').classList.add('open');$('#flash').classList.remove('on');void $('#flash').offsetWidth;$('#flash').classList.add('on');if(!reduce)confetti();
-      $('#verdict').textContent=`2.685 at step ${(hitAt+1).toLocaleString()}.`;setStatus('2.685');
-      // stop on the magic moment; "keep going" resumes to show it circles 2.685
+      hitShown=true;state.finished=true;gmEl.classList.add('hit');gmEl.textContent=gm[hitAt].toFixed(3);
+      drawChart(gm,upto,hitAt,N,true);
+      $('#flash').classList.remove('on');void $('#flash').offsetWidth;$('#flash').classList.add('on');if(!reduce)confetti();
+      $('#verdict').textContent=`landed on ${gm[hitAt].toFixed(3)} at step ${(hitAt+1).toLocaleString()}.`;setStatus('done');
+      $('#finnum').innerHTML=`it landed on <b>${gm[hitAt].toFixed(3)}</b>`;setTimeout(()=>{$('#finish').hidden=false},reduce?0:900);
+      // stop on the magic moment; "keep going" resumes to show it circles the value
       $('#go').disabled=false;$('#more').hidden=false;
       state.resume=()=>{$('#more').hidden=true;state.t2=performance.now()-T2*0.35;animId=requestAnimationFrame(frame)};
       return;
@@ -280,9 +290,12 @@ function animate(){
     if(p<1){animId=requestAnimationFrame(frame);return}
     // done
     const last=gm[N-1];const tail=gm.slice(Math.max(0,N-200));const near=tail.filter(v=>Math.abs(v-K)<0.06).length/tail.length;
-    if(hitAt>=0)$('#verdict').textContent=`2.685 at step ${(hitAt+1).toLocaleString()}, then it circles it. Ends at ${last.toFixed(3)} after ${N.toLocaleString()} steps.`;
-    else $('#verdict').textContent=kind==='sqrt'?`Stuck at ${last.toFixed(3)}. The list repeats, so it never gets to 2.685. A cheater.`:`Closest: ${gm[best].toFixed(3)} at step ${(best+1).toLocaleString()}. It's circling 2.685 (${Math.round(near*100)}% of the last 200 steps are within 0.06). More steps would nail it.`;
-    if(kind==='sqrt')setStatus('a cheater');else if(hitAt<0)setStatus('circling 2.685');
+    state.finished=true;gmEl.textContent=last.toFixed(3);drawChart(gm,N,hitAt,N,kind!=='sqrt');
+    if(hitAt>=0)$('#verdict').textContent=`landed on ${gm[hitAt].toFixed(3)} at step ${(hitAt+1).toLocaleString()}, then circles it. Ends at ${last.toFixed(3)} after ${N.toLocaleString()} steps.`;
+    else if(kind==='sqrt')$('#verdict').textContent=`Stuck at ${last.toFixed(3)}. The list repeats, so it never settles anywhere new. A cheater.`;
+    else{$('#verdict').textContent=`Closest: ${gm[best].toFixed(3)} at step ${(best+1).toLocaleString()}. Still circling it (${Math.round(near*100)}% of the last 200 steps are within 0.06).`;
+      $('#finnum').innerHTML=`it's circling <b>${gm[best].toFixed(3)}</b>`;setTimeout(()=>{$('#finish').hidden=false},reduce?0:600)}
+    if(kind==='sqrt')setStatus('a cheater');else if(hitAt<0)setStatus('done');
     $('#go').disabled=false;
   }
   animId=requestAnimationFrame(frame);
@@ -293,14 +306,16 @@ $('#go').onclick=()=>run('cbrt');
 $('#cheat').onclick=()=>run('sqrt');
 $('#again').onclick=reset;
 $('#more').onclick=()=>{if(state&&state.resume){const f=state.resume;state.resume=null;f()}};
-$('#num').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();run('cbrt')}e.stopPropagation()});
+$('#num').addEventListener('keydown',e=>{if(!$('#finish').hidden){e.preventDefault();$('#finish').hidden=true;return}if(e.key==='Enter'){e.preventDefault();$('#num').blur();run('cbrt')}e.stopPropagation()});
+$('#finish').onclick=()=>{$('#finish').hidden=true};
 document.addEventListener('keydown',e=>{
+  if(!$('#finish').hidden){e.preventDefault();$('#finish').hidden=true;return}
   if(e.target.tagName==='INPUT')return;
   if(e.key==='Enter')run('cbrt');
   else if(e.key==='r'||e.key==='R')reset();
   else if(e.key==='f'||e.key==='F'){try{const p=document.fullscreenElement?document.exitFullscreen():document.documentElement.requestFullscreen();if(p&&p.catch)p.catch(()=>{})}catch(err){}}
 });
-window.addEventListener('resize',()=>{if(state&&state.gm)drawChart(state.gm,state.gm.length,state.hitAt,state.gm.length);else drawChart([],0,-1,10)});
+window.addEventListener('resize',()=>{if(state&&state.gm)drawChart(state.gm,state.gm.length,state.hitAt,state.gm.length,!!state.finished);else drawChart([],0,-1,10,false)});
 reset();
 })();
 </script>
