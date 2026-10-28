@@ -369,11 +369,11 @@ const WORDS=[
   {vid:'3P6DWAwwViU',s:381.9,dur:520,cap:'YOU'},
 ];
 const SEQ=[];
-const B1=Math.round(60000/128),B2=2*B1,B3=3*B1,B4=4*B1;
+const B1=Math.round(60000/120),B2=2*B1,B3=3*B1,B4=4*B1,B8=8*B1; // 8 beats = 4 seconds
 SEQ.push({type:'title',big:'NUMBERPHILE',small:'the roster',dur:B4});
-HOSTS.forEach((h,i)=>SEQ.push({type:'card',vid:h.vid,s:h.s,dur:B3,no:String(i+1).padStart(2,'0')+' / '+HOSTS.length,name:h.name,tag:h.tag}));
+HOSTS.forEach((h,i)=>SEQ.push({type:'card',vid:h.vid,s:h.s,dur:B8,no:String(i+1).padStart(2,'0')+' / '+HOSTS.length,name:h.name,tag:h.tag}));
 SEQ.push({type:'title',big:'THE BIG ONES',small:'a few of the greatest hits',dur:B4});
-BIG.forEach(c=>SEQ.push({type:'clip',vid:c.vid,s:c.s,dur:B2,cap:c.cap}));
+BIG.forEach(c=>SEQ.push({type:'clip',vid:c.vid,s:c.s,dur:B8,cap:c.cap}));
 SEQ.push({type:'title',big:'ONE MORE THING',small:'',dur:B4});
 WORDS.forEach(w=>SEQ.push({type:'word',vid:w.vid,s:w.s,dur:B1,cap:w.cap}));
 SEQ.push({type:'rohan',dur:B3*2});
@@ -385,7 +385,7 @@ if(!seenIntro){
   const total=SEQ.reduce((a,x)=>a+x.dur,0);let elapsed=0;
   let ended=false,timer=0,actx=null,music=null,videoFails=0;
   // ---- music (WebAudio): a steady synth bed in A minor, 104 bpm. Every cut lands on a beat. ----
-  const BPM=128, BEAT=60/BPM;
+  const BPM=120, BEAT=60/BPM;
   function mkMusic(){
     const ac=actx=actx||new (window.AudioContext||window.webkitAudioContext)();
     const master=ac.createGain();master.gain.value=0.0001;master.connect(ac.destination);
