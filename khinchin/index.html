@@ -34,6 +34,9 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--blue);outline-o
 .panel{background:rgba(0,0,0,.28);border:2px solid rgba(233,189,85,.35);border-radius:18px;padding:18px 22px;min-width:0}
 .panel h2{font-family:var(--display);font-weight:400;font-size:clamp(18px,1.9vw,28px);color:var(--gold2);margin:0 0 10px}
 .inrow{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+#mode{font-family:var(--body);font-weight:900;font-size:clamp(16px,1.5vw,22px);padding:10px 12px;border-radius:12px;border:3px solid rgba(233,189,85,.5);background:#0d0a12;color:var(--chalk)}
+.ghost{background:transparent;color:var(--muted);border:2px solid rgba(255,255,255,.18);border-radius:12px;padding:8px 14px;font-weight:700;font-size:15px}
+.ghost:hover{color:var(--chalk);border-color:rgba(255,255,255,.4)}
 #num{flex:1;min-width:180px;font-family:var(--mono);font-size:clamp(28px,3.4vw,52px);font-weight:700;padding:8px 16px;border-radius:14px;border:3px solid var(--gold);background:#0d0a12;color:var(--chalk);width:100%}
 .go{background:var(--gold);color:var(--ink);border:0;border-radius:14px;padding:14px 26px;font-weight:900;font-size:clamp(18px,1.8vw,26px);box-shadow:0 4px 0 #8a6619;white-space:nowrap}
 .go:active{transform:translateY(3px);box-shadow:0 1px 0 #8a6619}
@@ -165,13 +168,23 @@ kbd{font-family:var(--mono);font-size:.9em;background:rgba(255,255,255,.1);borde
   </header>
 
   <section class="panel">
-    <h2>Give me a number</h2>
+    <h2>Pick an irrational number</h2>
     <div class="inrow">
-      <input id="num" inputmode="decimal" autocomplete="off" spellcheck="false" placeholder="like 7 or 3.5 or 2026" aria-label="The class's number">
+      <select id="mode" aria-label="How to make it irrational">
+        <option value="3">cube root of</option>
+        <option value="4">4th root of</option>
+        <option value="5">5th root of</option>
+        <option value="6">6th root of</option>
+        <option value="7">7th root of</option>
+        <option value="pi">π times</option>
+      </select>
+      <input id="num" inputmode="decimal" autocomplete="off" spellcheck="false" placeholder="a whole number, like 7 or 2026" aria-label="The class's number">
       <button class="go" id="go">Do it</button>
     </div>
-    <div class="hint">I'll take the <b>cube root</b> of it, chop it up, and squish it. It keeps going until it lands, or 10,000 steps.</div>
+    <div class="hint">A root of a whole number is irrational (unless it's a perfect power). So is π times anything. Shortcut: <b>7&amp;#5</b> = 7 rooted by 5 (the 5th root of 7). Then: chop it up, squish it, until it lands, or 10,000 steps.</div>
     <div id="msg"></div>
+    <div class="inrow" id="exc" hidden style="margin-top:8px;gap:8px"><span class="hint" style="margin:0">try an exception:</span>
+      <button class="ghost" data-mode="sqrt">√ square root</button><button class="ghost" data-mode="phi">φ golden ratio</button><button class="ghost" data-mode="e">e</button><button class="ghost" data-mode="frac">just a fraction</button></div>
   </section>
 
   <section id="acts">
@@ -194,15 +207,24 @@ kbd{font-family:var(--mono);font-size:.9em;background:rgba(255,255,255,.1);borde
 
 <script>
 (function(){
-const $=s=>document.querySelector(s);
+const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
 const K=2.6854520010;         // the target (never shown before the finish)
 const DIGITS=10800;           // decimal digits of the root we compute
 const MAXTERMS=10000;         // give up after this many steps
 let state=null, animId=0, confettiId=0;
 
-// ---------- exact integer roots (BigInt) ----------
+// ---------- exact arithmetic (BigInt) ----------
 function bitlen(n){return n.toString(2).length}
-function icbrt(n){if(n<2n)return n;let x=1n<<BigInt(Math.ceil(bitlen(n)/3)+1);for(;;){const y=(2n*x+n/(x*x))/3n;if(y>=x)break;x=y}while(x*x*x>n)x--;while((x+1n)*(x+1n)*(x+1n)<=n)x++;return x}
+function iroot(n,k){ // floor of the k-th root
+  const K=BigInt(k);if(n<2n)return n;let x=1n<<BigInt(Math.ceil(bitlen(n)/k)+1);
+  for(;;){const y=((K-1n)*x+n/(x**(K-1n)))/K;if(y>=x)break;x=y}
+  while(x**K>n)x--;while((x+1n)**K<=n)x++;return x}
+let PI_FIX=null,E_FIX=null;
+function piFixed(S){ // floor(π·S) by Machin's formula, exact
+  if(PI_FIX)return PI_FIX;const S2=S*100n;
+  const atanInv=x=>{let term=S2/x,sum=term;const x2=x*x;let k=1n,sign=-1n;for(;;){term/=x2;const t=term/(2n*k+1n);if(t===0n)break;sum+=sign*t;sign=-sign;k++}return sum};
+  PI_FIX=(16n*atanInv(5n)-4n*atanInv(239n))/100n;return PI_FIX}
+function eFixed(S){if(E_FIX)return E_FIX;const S2=S*100n;let term=S2,sum=S2,k=1n;while(term>0n){term/=k;sum+=term;k++}E_FIX=sum/100n;return E_FIX}
 
 // parse "7", "3.5", "22/7", "1,000" → {p,q} as a BigInt fraction
 function parseNum(s){
@@ -212,23 +234,29 @@ function parseNum(s){
   if((m=s.match(/^(\d*)\.?(\d*)$/))&&(m[1]||m[2])){const ip=m[1]||'0',fp=m[2]||'';return {p:BigInt(ip+fp),q:10n**BigInt(fp.length),text:s.replace(/^\./,'0.')}}
   return null;
 }
-
-// continued fraction of the cube root, from an exact interval so every term is right
-function rootCF(p,q){
-  const S=10n**BigInt(DIGITS);
-  const M=p*q*q*S*S*S, r=icbrt(M);
-  const exact=(r*r*r===M);
-  const den=q*S;                       // y is between r/den and (r+1)/den
-  const show=(r*10n**70n)/den; const ds=show.toString(); const intLen=ds.length-70; const intPart=intLen>0?ds.slice(0,intLen):'0'; const frac=(intLen>0?ds.slice(intLen):ds.padStart(70,'0')).slice(0,64);
-  const terms=[]; let an=r,ad=den,bn=exact?r:(r+1n),bd=den; let terminated=false;
+// the number lives in [lo/den, hi/den]; walk the continued fraction while both ends agree, so every term is right
+function intervalCF(lo,hi,den,exact){
+  const show=(lo*10n**70n)/den;const ds=show.toString();const intLen=ds.length-70;const intPart=intLen>0?ds.slice(0,intLen):'0';const frac=(intLen>0?ds.slice(intLen):ds.padStart(70,'0')).slice(0,64);
+  const terms=[];let an=lo,ad=den,bn=exact?lo:hi,bd=den;let terminated=false;
   for(let i=0;i<MAXTERMS+1;i++){
-    const qa=an/ad,qb=bn/bd; if(qa!==qb)break;
+    const qa=an/ad,qb=bn/bd;if(qa!==qb)break;
     terms.push(qa);
     const ra=an-qa*ad,rb=bn-qb*bd;
     if(ra===0n||rb===0n){terminated=exact;break}
     an=ad;ad=ra;bn=bd;bd=rb;
   }
   return {intPart,frac,terms,exact,terminated};
+}
+// build the chosen number: k-th root of p/q, π·p/q, φ, e, or the plain fraction
+function makeNumber(mode,p,q){
+  const S=10n**BigInt(DIGITS);
+  if(mode==='pi'){const pf=piFixed(S);return intervalCF(pf*p,(pf+1n)*p,q*S,false)}
+  if(mode==='e'){const ef=eFixed(S);return intervalCF(ef,ef+1n,S,false)}
+  if(mode==='phi'){const r=iroot(5n*S*S,2);return intervalCF(S+r,S+r+1n,2n*S,false)}
+  if(mode==='frac'){return intervalCF(p,p,q,true)}
+  const k=mode==='sqrt'?2:parseInt(mode,10);
+  const M=p*q**BigInt(k-1)*S**BigInt(k),r=iroot(M,k);const exact=(r**BigInt(k)===M);
+  return intervalCF(r,r+1n,q*S,exact);
 }
 function runningMeans(cf){const gm=[];let s=0;for(let i=0;i<cf.length;i++){s+=Math.log(Number(cf[i]));gm.push(Math.exp(s/(i+1)))}return gm}
 
@@ -260,34 +288,49 @@ function confetti(){cancelAnimationFrame(confettiId);cc.width=innerWidth;cc.heig
 // ---------- the show ----------
 const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
 function setStatus(t){$('#status').textContent=t}
-function reset(){cancelAnimationFrame(animId);state=null;$('#digits').textContent='';$('#terms').textContent='';$('#count').textContent='';$('#gm').textContent='—';$('#gm').classList.remove('hit');$('#gst').textContent='';$('#verdict').textContent='';$('#msg').textContent='';$('#xlabel').textContent='';$('#go').disabled=false;$('#finish').hidden=true;drawChart([],0,-1,10,false);setStatus('waiting for your number');$('#num').focus()}
+function reset(){cancelAnimationFrame(animId);state=null;$('#exc').hidden=true;$('#digits').textContent='';$('#terms').textContent='';$('#count').textContent='';$('#gm').textContent='—';$('#gm').classList.remove('hit');$('#gst').textContent='';$('#verdict').textContent='';$('#msg').textContent='';$('#xlabel').textContent='';$('#go').disabled=false;$('#finish').hidden=true;drawChart([],0,-1,10,false);setStatus('waiting for your number');$('#num').focus()}
 
-function run(){
-  const parsed=parseNum($('#num').value);
-  if(!parsed){$('#msg').textContent='Give me a plain number, like 7 or 3.5 (or a fraction like 22/7).';return}
-  if(parsed.p===0n){$('#msg').textContent='Zero is too easy. Pick another.';return}
+const SUP={'0':'⁰','1':'¹','2':'²','3':'³','4':'⁴','5':'⁵','6':'⁶','7':'⁷','8':'⁸','9':'⁹'};
+function rootSign(k){return k===2?'√':k===3?'∛':String(k).split('').map(c=>SUP[c]).join('')+'√'}
+function labelFor(mode,text){if(mode==='pi')return 'π × '+text;if(mode==='e')return 'e';if(mode==='phi')return 'φ';if(mode==='frac')return text;if(mode==='sqrt')return '√'+text;return rootSign(parseInt(mode,10))+text}
+function run(modeOverride){
+  let mode=modeOverride||$('#mode').value;if(!/^(\d+|pi|e|phi|frac|sqrt)$/.test(mode))mode='3';
+  const needsInput=!(mode==='e'||mode==='phi');
+  let raw=$('#num').value;
+  const sc=raw.match(/^\s*(.+?)\s*&#\s*(\d+)\s*$/); // shortcut: 7&#5 means "7 rooted by 5" (the 5th root of 7)
+  if(sc&&!modeOverride){
+    const k=parseInt(sc[2],10);
+    if(!(k>=2)){$('#msg').textContent='After &# put the root: 7&#5 is the 5th root of 7.';return}
+    if(k>12){$('#msg').textContent='Roots up to 12 only (7&#12 is fine).';return}
+    raw=sc[1];mode=k===2?'sqrt':String(k);
+  }
+  let parsed=parseNum(raw);
+  if(needsInput){
+    if(!parsed){$('#msg').textContent='Give me a plain number, like 7 or 2026. Shortcut: 7&#5 means the 5th root of 7.';return}
+    if(parsed.p===0n){$('#msg').textContent='Zero is too easy. Pick another.';return}
+  }else parsed={p:1n,q:1n,text:''};
+  if(mode==='frac'&&parsed.q===1n){parsed={p:parsed.p,q:parsed.p+1n,text:parsed.p+'/'+(parsed.p+1n)}} // a whole number as a fraction: use n/(n+1)
   cancelAnimationFrame(animId);$('#finish').hidden=true;$('#msg').textContent='';$('#go').disabled=true;$('#gm').classList.remove('hit');$('#verdict').textContent='';$('#gst').textContent='';$('#terms').textContent='';$('#count').textContent='';
   setStatus('computing… (this can take a few seconds)');
-  const label='∛'+parsed.text;$('#xlabel').textContent=label;$('#num').blur();
+  const label=labelFor(mode,parsed.text);$('#xlabel').textContent=label;$('#num').blur();
   setTimeout(()=>{
-    const r=rootCF(parsed.p,parsed.q);
+    let r;try{r=makeNumber(mode,parsed.p,parsed.q)}catch(e){$('#msg').textContent='That one is too big for me. Try a smaller number.';$('#go').disabled=false;setStatus('waiting for your number');return}
     const cf=r.terms.slice(1); // drop the whole-number part
     const gm=runningMeans(cf);
     let hitAt=-1;for(let i=30;i<gm.length;i++){if(Math.round(gm[i]*1000)===Math.round(K*1000)){hitAt=i;break}}
     let best=-1,bd=1e9;for(let i=30;i<gm.length;i++){const d=Math.abs(gm[i]-K);if(d<bd){bd=d;best=i}}
     const T=hitAt>=0?hitAt+1:gm.length; // how far the show runs: to the landing, or all the way
-    state={parsed,r,cf,gm,hitAt,best,label,T,finished:false};
+    state={parsed,r,cf,gm,hitAt,best,label,T,mode,finished:false};
     $('#digits').innerHTML=`${label} = <b>${r.intPart}.${r.frac}</b>…`;
-    if(r.terminated||cf.length<40){ // a perfect cube: the list stops
+    if(r.terminated||cf.length<40){ // rational: the list stops
       $('#terms').innerHTML=r.terms.map((t,i)=>`<span class="t${i&&t===1n?' one':''}">${t}</span>`).join('')+'<span class="t" style="color:var(--red)">STOP.</span>';
       $('#count').innerHTML=`the list <b>ends</b> after ${r.terms.length} numbers`;
-      $('#verdict').textContent='That number is a perfect cube. The list just stops, so there\'s nothing to squish. Give me another one.';
-      $('#gm').textContent='—';$('#go').disabled=false;setStatus('the list stopped');return;
+      $('#verdict').textContent=mode==='frac'?'A fraction. The list just stops, so there\'s nothing to squish. Fractions are not irrational.':'That\'s a perfect power, so the root is a whole number: not irrational. The list just stops. Give me another one.';
+      $('#gm').textContent='—';$('#go').disabled=false;setStatus('the list stopped');$('#exc').hidden=false;return;
     }
     animate();
   },30);
 }
-
 function animate(){
   const {cf,gm,hitAt,best,T,parsed}=state;
   const termsEl=$('#terms'),countEl=$('#count'),gmEl=$('#gm'),gst=$('#gst');
@@ -296,14 +339,14 @@ function animate(){
   setStatus('step 1: chopping…');
   function frame(now){
     if(phase===1){
-      const p=T1?Math.min(1,(now-t0)/T1):1;const k=Math.round(p*shown);
+      const p=T1?Math.max(0,Math.min(1,(now-t0)/T1)):1;const k=Math.round(p*shown);
       for(let i=lastT;i<k;i++){const s=document.createElement('span');s.className='t'+(cf[i]===1n?' one':'');s.textContent=cf[i].toString();termsEl.appendChild(s)}
       lastT=k;
       const total=Math.round(p*T);countEl.innerHTML=`<b>${total.toLocaleString()}</b> numbers in the list so far${total>shown?' (showing the first '+shown+')':''}`;
       if(p>=1){countEl.innerHTML=`<b>${T.toLocaleString()}</b> numbers in the list. (It really goes on forever.)`;phase=2;setStatus('step 2: squishing…');t2=now}
       animId=requestAnimationFrame(frame);return;
     }
-    let p=T2?Math.min(1,(now-t2)/T2):1;p=1-Math.pow(1-p,2.6);
+    let p=T2?Math.max(0,Math.min(1,(now-t2)/T2)):1;p=1-Math.pow(1-p,2.6);
     const upto=Math.max(1,Math.round(p*T));
     drawChart(gm,upto,-1,T,false);
     gmEl.textContent='…';gst.innerHTML=`after <b>${upto.toLocaleString()}</b> steps`;
@@ -316,22 +359,24 @@ function animate(){
     $('#flash').classList.remove('on');void $('#flash').offsetWidth;$('#flash').classList.add('on');if(!reduce)confetti();
     $('#verdict').textContent=hitAt>=0?`landed on ${landed.toFixed(3)} at step ${(hitAt+1).toLocaleString()}.`:`${T.toLocaleString()} steps. closest: ${landed.toFixed(3)} at step ${(best+1).toLocaleString()}, still circling it.`;
     gst.innerHTML=`after <b>${(hitAt>=0?hitAt+1:T).toLocaleString()}</b> steps`;
-    $('#finin').textContent=parsed.text;$('#finout').textContent=landed.toFixed(3);
-    setStatus('done');$('#go').disabled=false;
+    $('#finin').textContent=state.label;$('#finout').textContent=landed.toFixed(3);
+    setStatus('done');$('#go').disabled=false;$('#exc').hidden=false;
     setTimeout(()=>{$('#finish').hidden=false},reduce?0:900);
   }
   animId=requestAnimationFrame(frame);
 }
 
 // ---------- wiring ----------
-$('#go').onclick=run;
+$('#go').onclick=()=>run();
+$$('#exc button').forEach(b=>b.onclick=()=>run(b.dataset.mode));
 $('#finish').onclick=()=>{$('#finish').hidden=true};
 $('#num').addEventListener('keydown',e=>{if(!$('#finish').hidden){e.preventDefault();$('#finish').hidden=true;return}if(e.key==='Enter'){e.preventDefault();run()}e.stopPropagation()});
+$('#mode').addEventListener('keydown',e=>e.stopPropagation());
 document.addEventListener('keydown',e=>{
   if(!$('#intro').hidden)return;
   if(!$('#finish').hidden){e.preventDefault();$('#finish').hidden=true;return}
   if(e.target.tagName==='INPUT')return;
-  if(e.key==='Enter')run();
+  if(e.key==='Enter'&&e.target.tagName!=='SELECT'&&e.target.tagName!=='BUTTON')run();
   else if(e.key==='r'||e.key==='R')reset();
   else if(e.key==='f'||e.key==='F'){try{const p=document.fullscreenElement?document.exitFullscreen():document.documentElement.requestFullscreen();if(p&&p.catch)p.catch(()=>{})}catch(err){}}
 });
