@@ -3,14 +3,14 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>The Envelope Trick</title>
+<title>One Number</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rye&family=Nunito:wght@400;700;900&family=JetBrains+Mono:wght@500;700&display=swap">
 <style>
 /* A dark stage with red curtains and gold lettering. One screen, built for a projector. */
 :root{
   --stage:#17111f; --stage2:#241a30; --curtain:#8e1d26; --curtain2:#5e1119; --gold:#e9bd55; --gold2:#f6dc9a;
-  --chalk:#f3e9d7; --muted:#b9a98f; --blue:#6ea8ff; --red:#ff5a4e; --green:#6be28a; --card:#fff7e3; --ink:#1d1915;
+  --chalk:#f3e9d7; --muted:#b9a98f; --blue:#6ea8ff; --red:#ff5a4e; --ink:#1d1915;
   --display:'Rye','Georgia',serif; --body:'Nunito','Segoe UI',system-ui,sans-serif; --mono:'JetBrains Mono',ui-monospace,Menlo,monospace;
   color-scheme:dark;
 }
@@ -31,8 +31,6 @@ h1{font-family:var(--display);font-weight:400;font-size:clamp(28px,4.2vw,58px);m
 button{font:inherit;cursor:pointer}
 button:focus-visible,input:focus-visible{outline:3px solid var(--blue);outline-offset:2px}
 
-/* act 1: the number + the envelope */
-#act1{display:grid;grid-template-columns:1.4fr 1fr;gap:22px;align-items:stretch}
 .panel{background:rgba(0,0,0,.28);border:2px solid rgba(233,189,85,.35);border-radius:18px;padding:18px 22px;min-width:0}
 .panel h2{font-family:var(--display);font-weight:400;font-size:clamp(18px,1.9vw,28px);color:var(--gold2);margin:0 0 10px}
 .inrow{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
@@ -40,29 +38,10 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--blue);outline-o
 .go{background:var(--gold);color:var(--ink);border:0;border-radius:14px;padding:14px 26px;font-weight:900;font-size:clamp(18px,1.8vw,26px);box-shadow:0 4px 0 #8a6619;white-space:nowrap}
 .go:active{transform:translateY(3px);box-shadow:0 1px 0 #8a6619}
 .go[disabled]{opacity:.5;cursor:default}
-.ghost{background:transparent;color:var(--muted);border:2px solid rgba(255,255,255,.18);border-radius:12px;padding:8px 14px;font-weight:700;font-size:15px}
-.ghost:hover{color:var(--chalk);border-color:rgba(255,255,255,.4)}
 .hint{color:var(--muted);font-size:15px;margin-top:10px;font-weight:700}
 .hint b{color:var(--chalk)}
 #msg{margin-top:10px;font-size:18px;font-weight:700;color:var(--red);min-height:1.4em}
 
-/* envelope */
-.envwrap{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px}
-.envelope{--h:150px;position:relative;height:var(--h);width:calc(var(--h)*1.5);flex:none;perspective:900px}
-.envelope .body{position:absolute;inset:0;background:var(--card);border:3px solid var(--ink);border-radius:10px;box-shadow:0 10px 30px rgba(0,0,0,.6)}
-.envelope .paper{position:absolute;left:10%;right:10%;top:9%;height:80%;background:#fff;border:2px solid #d8ccae;border-radius:6px;display:grid;place-items:center;font-family:var(--display);font-size:calc(var(--h)*.34);color:#c6302a;z-index:2;transition:transform .7s ease .35s;opacity:0}
-.envelope .cover{position:absolute;left:0;right:0;bottom:0;height:62%;background:var(--card);border:3px solid var(--ink);border-top:0;border-radius:0 0 10px 10px;z-index:3;clip-path:polygon(0 0,50% 38%,100% 0,100% 100%,0 100%)}
-.envelope .cover::before{content:"";position:absolute;left:0;right:0;top:0;height:40%;background:var(--ink);clip-path:polygon(0 0,50% 100%,100% 0,100% 7%,50% 107%,0 7%)}
-.envelope .flap{position:absolute;left:0;right:0;top:0;height:52%;z-index:4;background:var(--ink);clip-path:polygon(0 0,100% 0,50% 100%);transform-origin:top center;transition:transform .7s ease,z-index 0s .35s}
-.envelope .flap::after{content:"";position:absolute;inset:3px 4px 5px;background:#e8dcbd;clip-path:polygon(0 0,100% 0,50% 100%)}
-.envelope .seal{position:absolute;left:50%;top:52%;transform:translate(-50%,-50%);background:#c6302a;color:#fff;font-family:var(--display);font-size:calc(var(--h)*.1);padding:.3em .8em;border-radius:999px;z-index:5;transition:opacity .3s;letter-spacing:.04em;white-space:nowrap}
-.envelope.open .flap{transform:rotateX(180deg);z-index:1}
-.envelope.open .seal{opacity:0}
-.envelope.open .paper{transform:translateY(calc(var(--h)*-.5));opacity:1}
-.envcap{font-size:14px;color:var(--muted);font-weight:700;letter-spacing:.08em;text-transform:uppercase;text-align:center}
-@media (prefers-reduced-motion:reduce){.envelope .flap,.envelope .paper{transition:none}}
-
-/* act 2 + 3 */
 #acts{display:grid;grid-template-columns:1fr 1.25fr;gap:22px;flex:1;min-height:0}
 .step{display:flex;flex-direction:column;min-height:0}
 .step .lab{display:flex;align-items:baseline;justify-content:space-between;gap:10px}
@@ -84,52 +63,80 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--blue);outline-o
 .readout .st b{color:var(--chalk)}
 #verdict{font-family:var(--display);font-size:clamp(18px,2.1vw,30px);color:var(--gold);margin-top:6px;min-height:1.3em;line-height:1.2}
 
-/* finish banner */
-#finish{position:fixed;inset:0;z-index:9;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;background:rgba(14,9,20,.93);text-align:center;padding:24px;cursor:pointer}
+/* finish screen */
+#finish{position:fixed;inset:0;z-index:9;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;background:rgba(14,9,20,.94);text-align:center;padding:24px;cursor:pointer}
+#finish .nums{font-family:var(--mono);font-weight:700;font-size:clamp(26px,4.4vw,70px);color:var(--muted);margin-bottom:22px;letter-spacing:.02em;display:flex;align-items:center;gap:.5em;flex-wrap:wrap;justify-content:center}
+#finish .nums b{color:var(--chalk)}#finish .nums i{color:var(--gold2);font-style:normal}
+#finish .nums .arrow{color:var(--muted)}
 #finish .fin1,#finish .fin2{font-family:var(--display);color:var(--gold);line-height:1;text-shadow:0 3px 0 #6b4a0e,0 0 40px rgba(233,189,85,.5)}
 #finish .fin1{font-size:clamp(40px,8vw,120px)}#finish .fin2{font-size:clamp(40px,8vw,120px);color:var(--chalk);text-shadow:0 3px 0 #000}
-#finish .fin3{font-family:var(--mono);font-weight:700;font-size:clamp(28px,4.5vw,70px);color:var(--muted);margin-top:18px;letter-spacing:.04em}
-#finish .fin3 b{color:var(--gold2)}
-#finish .fin4{color:var(--muted);font-weight:700;font-size:15px;margin-top:22px;letter-spacing:.08em;text-transform:uppercase}
+#finish .fin4{color:var(--muted);font-weight:700;font-size:15px;margin-top:26px;letter-spacing:.08em;text-transform:uppercase}
+
 /* flash + confetti */
 #flash{position:fixed;inset:0;background:var(--gold);opacity:0;pointer-events:none;z-index:8}
 #flash.on{animation:flash .9s ease-out}
 @keyframes flash{0%{opacity:.85}100%{opacity:0}}
 #confetti{position:fixed;inset:0;pointer-events:none;z-index:7}
-footer{display:flex;justify-content:space-between;gap:12px;color:var(--muted);font-size:13px;font-weight:700;flex-wrap:wrap}
+footer{display:flex;justify-content:flex-start;gap:12px;color:var(--muted);font-size:13px;font-weight:700;flex-wrap:wrap}
 kbd{font-family:var(--mono);font-size:.9em;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);border-bottom-width:3px;border-radius:6px;padding:1px 7px}
-@media (max-width:900px){#act1,#acts{grid-template-columns:1fr}#app{padding:14px 16px}.curtain{display:none}body{overflow:auto}}
+
+/* opening montage */
+#intro{position:fixed;inset:0;z-index:20;background:#000;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;padding:24px}
+#intro .frame{width:min(100%,calc((100vh - 200px) * 16 / 9));aspect-ratio:16/9;max-width:1400px;background:#000;border:2px solid rgba(233,189,85,.35);border-radius:14px;overflow:hidden;position:relative;box-shadow:0 0 60px rgba(0,0,0,.8)}
+#intro .frame iframe,#intro .frame #yt{position:absolute;left:0;width:100%;top:-22%;height:144%;border:0;pointer-events:none}
+#intro .shade{position:absolute;inset:0;background:#000;opacity:1;transition:opacity .45s ease;pointer-events:none}
+#intro .shade.off{opacity:0}
+#intro .cover{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;background:radial-gradient(ellipse at center,#2a1f36,#000 75%);cursor:pointer}
+#intro .cover .t1{font-family:var(--display);font-size:clamp(26px,4vw,60px);color:var(--gold);text-shadow:0 2px 0 #6b4a0e,0 0 30px rgba(233,189,85,.4);text-align:center;line-height:1.1}
+#intro .cover .t2{color:var(--muted);font-weight:700;letter-spacing:.12em;text-transform:uppercase;font-size:clamp(12px,1.2vw,16px)}
+#intro .cover .play{margin-top:10px;background:var(--gold);color:var(--ink);border:0;border-radius:999px;padding:14px 34px;font-weight:900;font-size:clamp(16px,1.6vw,24px);box-shadow:0 4px 0 #8a6619}
+#intro .bar{display:flex;align-items:center;justify-content:space-between;gap:16px;width:min(100%,calc((100vh - 200px) * 16 / 9));max-width:1400px}
+#intro .cap{font-family:var(--display);color:var(--gold2);font-size:clamp(16px,1.8vw,26px);min-height:1.3em}
+#intro .skip{background:transparent;color:var(--muted);border:2px solid rgba(255,255,255,.2);border-radius:12px;padding:8px 16px;font-weight:700}
+#intro .skip:hover{color:var(--chalk);border-color:rgba(255,255,255,.5)}
+#intro .dots{display:flex;gap:6px}
+#intro .dots i{width:9px;height:9px;border-radius:50%;background:rgba(255,255,255,.18)}
+#intro .dots i.on{background:var(--gold)}
+@media (max-width:900px){#acts{grid-template-columns:1fr}#app{padding:14px 16px}.curtain{display:none}body{overflow:auto}}
 </style>
 </head>
 <body>
 <div class="curtain l"></div><div class="curtain r"></div>
 <div id="flash"></div><canvas id="confetti"></canvas>
-<div id="finish" hidden><div class="fin1">LOOK BEHIND YOU</div><div class="fin2">AND OPEN</div><div class="fin3" id="finnum"></div><div class="fin4">press any key to go on</div></div>
+
+<div id="finish" hidden>
+  <div class="nums"><b id="finin"></b><span class="arrow">→</span><i id="finout"></i></div>
+  <div class="fin1">LOOK BEHIND YOU</div><div class="fin2">AND OPEN</div>
+  <div class="fin4">press any key to go on</div>
+</div>
+
+<div id="intro" hidden>
+  <div class="frame">
+    <div id="yt"></div>
+    <div class="shade" id="shade"></div>
+    <div class="cover" id="cover">
+      <div class="t1">a mathematician.<br>a number.<br>a trick.</div>
+      <div class="t2">clips from Numberphile · sound on</div>
+      <button class="play" id="playbtn">▶ Play</button>
+    </div>
+  </div>
+  <div class="bar"><div class="cap" id="cap"></div><div class="dots" id="dots"></div><button class="skip" id="skipbtn">skip →</button></div>
+</div>
+
 <div id="app">
   <header>
-    <div><h1>The Envelope Trick</h1><div class="sub">one number. any number.</div></div>
+    <div><h1>One Number</h1><div class="sub">any number. you pick.</div></div>
     <div class="sub" id="status">waiting for your number</div>
   </header>
 
-  <section id="act1">
-    <div class="panel">
-      <h2>Give me a number</h2>
-      <div class="inrow">
-        <input id="num" inputmode="decimal" autocomplete="off" spellcheck="false" placeholder="like 7 or 3.5 or 2026" aria-label="The class's number">
-        <button class="go" id="go">Do the trick</button>
-      </div>
-      <div class="hint">I'll take the <b>cube root</b> of it, chop it up, and squish it.</div>
-      <div id="msg"></div>
-      <div class="inrow" style="margin-top:8px;gap:8px">
-        <button class="ghost" id="again" hidden>Start over</button>
-        <button class="ghost" id="more" hidden>Keep going (what happens after?)</button>
-        <button class="ghost" id="cheat" hidden>What if I used the square root instead?</button>
-      </div>
+  <section class="panel">
+    <h2>Give me a number</h2>
+    <div class="inrow">
+      <input id="num" inputmode="decimal" autocomplete="off" spellcheck="false" placeholder="like 7 or 3.5 or 2026" aria-label="The class's number">
+      <button class="go" id="go">Do it</button>
     </div>
-    <div class="panel envwrap">
-      <div class="envelope" id="env"><div class="body"></div><div class="cover"></div><div class="flap"></div><div class="seal">SEALED</div></div>
-      <div class="envcap">my prediction. sealed before class.</div>
-    </div>
+    <div class="hint">I'll take the <b>cube root</b> of it, chop it up, and squish it. It keeps going until it lands, or 10,000 steps.</div>
+    <div id="msg"></div>
   </section>
 
   <section id="acts">
@@ -147,23 +154,22 @@ kbd{font-family:var(--mono);font-size:.9em;background:rgba(255,255,255,.1);borde
     </div>
   </section>
 
-  <footer><span><kbd>Enter</kbd> run · <kbd>F</kbd> fullscreen · <kbd>R</kbd> start over</span><span>computed exactly, to 3,000 digits, in your browser</span></footer>
+  <footer><span><kbd>Enter</kbd> run · <kbd>F</kbd> fullscreen · <kbd>R</kbd> start over</span></footer>
 </div>
 
 <script>
 (function(){
 const $=s=>document.querySelector(s);
-const K=2.6854520010; // Khinchin's constant (never shown before the finish)
-const DIGITS=3000;           // decimal digits of the root we compute
-const MAXTERMS=2600;         // continued-fraction terms we keep
+const K=2.6854520010;         // the target (never shown before the finish)
+const DIGITS=10800;           // decimal digits of the root we compute
+const MAXTERMS=10000;         // give up after this many steps
 let state=null, animId=0, confettiId=0;
 
 // ---------- exact integer roots (BigInt) ----------
 function bitlen(n){return n.toString(2).length}
-function isqrt(n){if(n<2n)return n;let x=1n<<BigInt(Math.ceil(bitlen(n)/2));for(;;){const y=(x+n/x)>>1n;if(y>=x)break;x=y}while(x*x>n)x--;while((x+1n)*(x+1n)<=n)x++;return x}
 function icbrt(n){if(n<2n)return n;let x=1n<<BigInt(Math.ceil(bitlen(n)/3)+1);for(;;){const y=(2n*x+n/(x*x))/3n;if(y>=x)break;x=y}while(x*x*x>n)x--;while((x+1n)*(x+1n)*(x+1n)<=n)x++;return x}
 
-// parse "7", "3.5", "22/7", "1,000" → {p,q} as BigInt fraction
+// parse "7", "3.5", "22/7", "1,000" → {p,q} as a BigInt fraction
 function parseNum(s){
   s=s.trim().replace(/,/g,'').replace(/\s+/g,'');
   let m;
@@ -172,17 +178,13 @@ function parseNum(s){
   return null;
 }
 
-// continued fraction of a root, computed from an exact interval so every term is right
-function rootCF(p,q,kind){
-  // y = (p/q)^(1/k). scale so the root is an integer root: cbrt(p/q)=cbrt(p*q^2)/q ; sqrt(p/q)=sqrt(p*q)/q
+// continued fraction of the cube root, from an exact interval so every term is right
+function rootCF(p,q){
   const S=10n**BigInt(DIGITS);
-  let M,r;
-  if(kind==='sqrt'){M=p*q*S*S;r=isqrt(M)}else{M=p*q*q*S*S*S;r=icbrt(M)}
-  const exact=(kind==='sqrt')?(r*r===M):(r*r*r===M);
+  const M=p*q*q*S*S*S, r=icbrt(M);
+  const exact=(r*r*r===M);
   const den=q*S;                       // y is between r/den and (r+1)/den
-  // decimal digits for display: floor(r*10^70/den)
-  const show=(r*10n**70n)/den; let ds=show.toString(); const intLen=ds.length-70; const intPart=intLen>0?ds.slice(0,intLen):'0'; const frac=(intLen>0?ds.slice(intLen):ds.padStart(70,'0')).slice(0,64);
-  // interval continued fraction
+  const show=(r*10n**70n)/den; const ds=show.toString(); const intLen=ds.length-70; const intPart=intLen>0?ds.slice(0,intLen):'0'; const frac=(intLen>0?ds.slice(intLen):ds.padStart(70,'0')).slice(0,64);
   const terms=[]; let an=r,ad=den,bn=exact?r:(r+1n),bd=den; let terminated=false;
   for(let i=0;i<MAXTERMS+1;i++){
     const qa=an/ad,qb=bn/bd; if(qa!==qb)break;
@@ -193,8 +195,6 @@ function rootCF(p,q,kind){
   }
   return {intPart,frac,terms,exact,terminated};
 }
-
-// ---------- running geometric mean ----------
 function runningMeans(cf){const gm=[];let s=0;for(let i=0;i<cf.length;i++){s+=Math.log(Number(cf[i]));gm.push(Math.exp(s/(i+1)))}return gm}
 
 // ---------- drawing ----------
@@ -208,7 +208,7 @@ function drawChart(gm,upto,hitAt,N,showTarget){
   ctx.fillStyle='#b9a98f';ctx.font='700 14px Nunito, system-ui, sans-serif';ctx.textAlign='right';[1,2,3,4].forEach(v=>ctx.fillText(v,pad.l-10,Y(v)+5));
   ctx.textAlign='center';ctx.fillText('steps →',(pad.l+W-pad.r)/2,H-7);
   if(showTarget){ctx.setLineDash([8,7]);ctx.strokeStyle='#ff5a4e';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(pad.l,Y(K));ctx.lineTo(W-pad.r,Y(K));ctx.stroke();ctx.setLineDash([]);
-  ctx.textAlign='left';ctx.fillStyle='#ff5a4e';ctx.font='900 15px Nunito, system-ui, sans-serif';ctx.fillText(K.toFixed(3),pad.l+8,Y(K)-8)}
+    ctx.textAlign='left';ctx.fillStyle='#ff5a4e';ctx.font='900 15px Nunito, system-ui, sans-serif';ctx.fillText(K.toFixed(3),pad.l+8,Y(K)-8)}
   if(upto>0){ctx.strokeStyle='#6ea8ff';ctx.lineWidth=2.5;ctx.lineJoin='round';ctx.beginPath();for(let i=0;i<upto;i++){const x=X(i+1),y=Y(gm[i]);i?ctx.lineTo(x,y):ctx.moveTo(x,y)}ctx.stroke();
     if(hitAt>=0&&upto>hitAt){const x=X(hitAt+1),y=Y(gm[hitAt]);ctx.fillStyle='#e9bd55';ctx.beginPath();ctx.arc(x,y,8,0,Math.PI*2);ctx.fill();ctx.strokeStyle='#17111f';ctx.lineWidth=2;ctx.stroke()}
     const x=X(upto),y=Y(gm[upto-1]);ctx.fillStyle='#6ea8ff';ctx.beginPath();ctx.arc(x,y,6,0,Math.PI*2);ctx.fill()}
@@ -225,98 +225,133 @@ function confetti(){cancelAnimationFrame(confettiId);cc.width=innerWidth;cc.heig
 // ---------- the show ----------
 const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
 function setStatus(t){$('#status').textContent=t}
-function reset(){cancelAnimationFrame(animId);state=null;$('#env').classList.remove('open');$('#digits').textContent='';$('#terms').textContent='';$('#count').textContent='';$('#gm').textContent='—';$('#gm').classList.remove('hit');$('#gst').textContent='';$('#verdict').textContent='';$('#msg').textContent='';$('#xlabel').textContent='';$('#again').hidden=true;$('#cheat').hidden=true;$('#more').hidden=true;$('#go').disabled=false;$('#finish').hidden=true;drawChart([],0,-1,10,false);setStatus('waiting for your number');$('#num').focus()}
+function reset(){cancelAnimationFrame(animId);state=null;$('#digits').textContent='';$('#terms').textContent='';$('#count').textContent='';$('#gm').textContent='—';$('#gm').classList.remove('hit');$('#gst').textContent='';$('#verdict').textContent='';$('#msg').textContent='';$('#xlabel').textContent='';$('#go').disabled=false;$('#finish').hidden=true;drawChart([],0,-1,10,false);setStatus('waiting for your number');$('#num').focus()}
 
-function run(kind){
+function run(){
   const parsed=parseNum($('#num').value);
   if(!parsed){$('#msg').textContent='Give me a plain number, like 7 or 3.5 (or a fraction like 22/7).';return}
   if(parsed.p===0n){$('#msg').textContent='Zero is too easy. Pick another.';return}
-  cancelAnimationFrame(animId);$('#more').hidden=true;$('#env').classList.remove('open');$('#msg').textContent='';$('#go').disabled=true;$('#gm').classList.remove('hit');$('#verdict').textContent='';$('#gst').textContent='';
-  setStatus('computing…');
-  const label=(kind==='sqrt'?'√':'∛')+parsed.text;$('#xlabel').textContent=label;
+  cancelAnimationFrame(animId);$('#finish').hidden=true;$('#msg').textContent='';$('#go').disabled=true;$('#gm').classList.remove('hit');$('#verdict').textContent='';$('#gst').textContent='';$('#terms').textContent='';$('#count').textContent='';
+  setStatus('computing… (this can take a few seconds)');
+  const label='∛'+parsed.text;$('#xlabel').textContent=label;$('#num').blur();
   setTimeout(()=>{
-    const t0=performance.now();
-    const r=rootCF(parsed.p,parsed.q,kind);
+    const r=rootCF(parsed.p,parsed.q);
     const cf=r.terms.slice(1); // drop the whole-number part
     const gm=runningMeans(cf);
-    let hitAt=-1;for(let i=30;i<gm.length;i++){if(Math.round(gm[i]*1000)===2685){hitAt=i;break}}
+    let hitAt=-1;for(let i=30;i<gm.length;i++){if(Math.round(gm[i]*1000)===Math.round(K*1000)){hitAt=i;break}}
     let best=-1,bd=1e9;for(let i=30;i<gm.length;i++){const d=Math.abs(gm[i]-K);if(d<bd){bd=d;best=i}}
-    state={kind,parsed,r,cf,gm,hitAt,best,label,ms:performance.now()-t0};
-    $('#again').hidden=false;$('#cheat').hidden=kind!=='cbrt';
-    showDigits(r,label);
-    if(r.terminated||cf.length<40){ // rational root: the list stops
+    const T=hitAt>=0?hitAt+1:gm.length; // how far the show runs: to the landing, or all the way
+    state={parsed,r,cf,gm,hitAt,best,label,T,finished:false};
+    $('#digits').innerHTML=`${label} = <b>${r.intPart}.${r.frac}</b>…`;
+    if(r.terminated||cf.length<40){ // a perfect cube: the list stops
       $('#terms').innerHTML=r.terms.map((t,i)=>`<span class="t${i&&t===1n?' one':''}">${t}</span>`).join('')+'<span class="t" style="color:var(--red)">STOP.</span>';
       $('#count').innerHTML=`the list <b>ends</b> after ${r.terms.length} numbers`;
-      $('#verdict').textContent=kind==='sqrt'?'A perfect square. The list just stops. Nothing to squish.':'That number is a perfect cube. The list just stops, so there\'s nothing to squish. Give me another one.';
+      $('#verdict').textContent='That number is a perfect cube. The list just stops, so there\'s nothing to squish. Give me another one.';
       $('#gm').textContent='—';$('#go').disabled=false;setStatus('the list stopped');return;
     }
     animate();
   },30);
 }
-function showDigits(r,label){$('#digits').innerHTML=`${label} = <b>${r.intPart}.${r.frac}</b>…`}
 
 function animate(){
-  const {cf,gm,hitAt,best,kind}=state;const N=cf.length;
+  const {cf,gm,hitAt,best,T,parsed}=state;
   const termsEl=$('#terms'),countEl=$('#count'),gmEl=$('#gm'),gst=$('#gst');
-  termsEl.textContent='';const shown=Math.min(60,N);
-  const T1=reduce?0:2600, T2=reduce?0:8000, t0=performance.now();let lastT=0,lastG=0,hitShown=false,phase=1;
+  const shown=Math.min(60,T);
+  const T1=reduce?0:2200, T2=reduce?0:7500, t0=performance.now();let lastT=0,phase=1,t2=0;
   setStatus('step 1: chopping…');
   function frame(now){
-    const t=now-t0;
     if(phase===1){
-      const p=T1?Math.min(1,t/T1):1;const k=Math.round(p*shown);
+      const p=T1?Math.min(1,(now-t0)/T1):1;const k=Math.round(p*shown);
       for(let i=lastT;i<k;i++){const s=document.createElement('span');s.className='t'+(cf[i]===1n?' one':'');s.textContent=cf[i].toString();termsEl.appendChild(s)}
       lastT=k;
-      const total=Math.round(p*N);countEl.innerHTML=`<b>${total.toLocaleString()}</b> numbers in the list so far${total>=shown?' (showing the first '+shown+')':''}`;
-      if(p>=1){countEl.innerHTML=`<b>${N.toLocaleString()}</b> numbers in the list. (It really goes on forever; this is as far as I went.)`;phase=2;setStatus('step 2: squishing…');state.t2=now}
+      const total=Math.round(p*T);countEl.innerHTML=`<b>${total.toLocaleString()}</b> numbers in the list so far${total>shown?' (showing the first '+shown+')':''}`;
+      if(p>=1){countEl.innerHTML=`<b>${T.toLocaleString()}</b> numbers in the list. (It really goes on forever.)`;phase=2;setStatus('step 2: squishing…');t2=now}
       animId=requestAnimationFrame(frame);return;
     }
-    const t2=now-state.t2;let p=T2?Math.min(1,t2/T2):1;p=1-Math.pow(1-p,2.6);
-    let upto=Math.max(1,Math.round(p*N));
-    if(!hitShown&&hitAt>=0&&upto>hitAt){upto=hitAt+1}
-    drawChart(gm,upto,hitShown?hitAt:-1,N,hitShown);
-    gmEl.textContent=state.finished?gm[upto-1].toFixed(3):'…';gst.innerHTML=`after <b>${upto.toLocaleString()}</b> steps`;
-    if(!hitShown&&hitAt>=0&&upto>=hitAt+1){
-      hitShown=true;state.finished=true;gmEl.classList.add('hit');gmEl.textContent=gm[hitAt].toFixed(3);
-      drawChart(gm,upto,hitAt,N,true);
-      $('#flash').classList.remove('on');void $('#flash').offsetWidth;$('#flash').classList.add('on');if(!reduce)confetti();
-      $('#verdict').textContent=`landed on ${gm[hitAt].toFixed(3)} at step ${(hitAt+1).toLocaleString()}.`;setStatus('done');
-      $('#finnum').innerHTML=`it landed on <b>${gm[hitAt].toFixed(3)}</b>`;setTimeout(()=>{$('#finish').hidden=false},reduce?0:900);
-      // stop on the magic moment; "keep going" resumes to show it circles the value
-      $('#go').disabled=false;$('#more').hidden=false;
-      state.resume=()=>{$('#more').hidden=true;state.t2=performance.now()-T2*0.35;animId=requestAnimationFrame(frame)};
-      return;
-    }
+    let p=T2?Math.min(1,(now-t2)/T2):1;p=1-Math.pow(1-p,2.6);
+    const upto=Math.max(1,Math.round(p*T));
+    drawChart(gm,upto,-1,T,false);
+    gmEl.textContent='…';gst.innerHTML=`after <b>${upto.toLocaleString()}</b> steps`;
     if(p<1){animId=requestAnimationFrame(frame);return}
-    // done
-    const last=gm[N-1];const tail=gm.slice(Math.max(0,N-200));const near=tail.filter(v=>Math.abs(v-K)<0.06).length/tail.length;
-    state.finished=true;gmEl.textContent=last.toFixed(3);drawChart(gm,N,hitAt,N,kind!=='sqrt');
-    if(hitAt>=0)$('#verdict').textContent=`landed on ${gm[hitAt].toFixed(3)} at step ${(hitAt+1).toLocaleString()}, then circles it. Ends at ${last.toFixed(3)} after ${N.toLocaleString()} steps.`;
-    else if(kind==='sqrt')$('#verdict').textContent=`Stuck at ${last.toFixed(3)}. The list repeats, so it never settles anywhere new. A cheater.`;
-    else{$('#verdict').textContent=`Closest: ${gm[best].toFixed(3)} at step ${(best+1).toLocaleString()}. Still circling it (${Math.round(near*100)}% of the last 200 steps are within 0.06).`;
-      $('#finnum').innerHTML=`it's circling <b>${gm[best].toFixed(3)}</b>`;setTimeout(()=>{$('#finish').hidden=false},reduce?0:600)}
-    if(kind==='sqrt')setStatus('a cheater');else if(hitAt<0)setStatus('done');
-    $('#go').disabled=false;
+    // the finish
+    state.finished=true;
+    const landed=hitAt>=0?gm[hitAt]:gm[best];
+    gmEl.classList.add('hit');gmEl.textContent=landed.toFixed(3);
+    drawChart(gm,T,hitAt,T,true);
+    $('#flash').classList.remove('on');void $('#flash').offsetWidth;$('#flash').classList.add('on');if(!reduce)confetti();
+    $('#verdict').textContent=hitAt>=0?`landed on ${landed.toFixed(3)} at step ${(hitAt+1).toLocaleString()}.`:`${T.toLocaleString()} steps. closest: ${landed.toFixed(3)} at step ${(best+1).toLocaleString()}, still circling it.`;
+    gst.innerHTML=`after <b>${(hitAt>=0?hitAt+1:T).toLocaleString()}</b> steps`;
+    $('#finin').textContent=parsed.text;$('#finout').textContent=landed.toFixed(3);
+    setStatus('done');$('#go').disabled=false;
+    setTimeout(()=>{$('#finish').hidden=false},reduce?0:900);
   }
   animId=requestAnimationFrame(frame);
 }
 
 // ---------- wiring ----------
-$('#go').onclick=()=>run('cbrt');
-$('#cheat').onclick=()=>run('sqrt');
-$('#again').onclick=reset;
-$('#more').onclick=()=>{if(state&&state.resume){const f=state.resume;state.resume=null;f()}};
-$('#num').addEventListener('keydown',e=>{if(!$('#finish').hidden){e.preventDefault();$('#finish').hidden=true;return}if(e.key==='Enter'){e.preventDefault();$('#num').blur();run('cbrt')}e.stopPropagation()});
+$('#go').onclick=run;
 $('#finish').onclick=()=>{$('#finish').hidden=true};
+$('#num').addEventListener('keydown',e=>{if(!$('#finish').hidden){e.preventDefault();$('#finish').hidden=true;return}if(e.key==='Enter'){e.preventDefault();run()}e.stopPropagation()});
 document.addEventListener('keydown',e=>{
+  if(!$('#intro').hidden)return;
   if(!$('#finish').hidden){e.preventDefault();$('#finish').hidden=true;return}
   if(e.target.tagName==='INPUT')return;
-  if(e.key==='Enter')run('cbrt');
+  if(e.key==='Enter')run();
   else if(e.key==='r'||e.key==='R')reset();
   else if(e.key==='f'||e.key==='F'){try{const p=document.fullscreenElement?document.exitFullscreen():document.documentElement.requestFullscreen();if(p&&p.catch)p.catch(()=>{})}catch(err){}}
 });
-window.addEventListener('resize',()=>{if(state&&state.gm)drawChart(state.gm,state.gm.length,state.hitAt,state.gm.length,!!state.finished);else drawChart([],0,-1,10,false)});
+window.addEventListener('resize',()=>{if(state&&state.gm)drawChart(state.gm,state.finished?state.T:1,state.finished?state.hitAt:-1,state.T,!!state.finished);else drawChart([],0,-1,10,false)});
 reset();
+
+// ---------- opening montage (official YouTube embed, hand-picked moments; the number is never said or shown) ----------
+const VIDEO='-mXaU3N9e8Y';
+const CLIPS=[
+  {s:0.0,  e:3.6,  cap:'"would you like to see a magic trick?"'},
+  {s:4.0,  e:11.0, cap:'pick a number…'},
+  {s:35.0, e:39.6, cap:'don\'t tell me yet'},
+  {s:392.0,e:408.8,cap:'whichever one you picked…'},
+  {s:439.0,e:450.5,cap:'100%'},
+  {s:573.0,e:581.0,cap:'…and nobody knows a single one'},
+];
+let seenIntro=false;try{seenIntro=sessionStorage.getItem('intro-seen')==='1'}catch(e){}
+const intro=$('#intro');
+if(!seenIntro){
+  intro.hidden=false;
+  const dots=$('#dots');CLIPS.forEach(()=>dots.appendChild(document.createElement('i')));
+  let player=null,idx=-1,poll=0,ended=false;
+  function endIntro(){if(ended)return;ended=true;clearInterval(poll);try{sessionStorage.setItem('intro-seen','1')}catch(e){}try{player&&player.stopVideo&&player.stopVideo()}catch(e){}intro.hidden=true;$('#num').focus()}
+  function showClip(i){
+    if(i>=CLIPS.length){endIntro();return}
+    idx=i;const c=CLIPS[i];
+    [...dots.children].forEach((d,k)=>d.classList.toggle('on',k<=i));
+    $('#cap').textContent=c.cap;
+    $('#shade').classList.remove('off');
+    try{player.unloadModule('captions');player.unloadModule('cc')}catch(e){}
+    player.seekTo(c.s,true);player.playVideo();
+    setTimeout(()=>$('#shade').classList.add('off'),350);
+  }
+  function tick(){
+    if(!player||idx<0||!player.getCurrentTime)return;
+    const t=player.getCurrentTime();const c=CLIPS[idx];
+    if(t>=c.e-0.15||t<c.s-2){ // clip over (or the player jumped somewhere odd)
+      const next=idx+1;idx=-2; // guard against double advance while fading
+      $('#shade').classList.remove('off');
+      setTimeout(()=>showClip(next),380);
+    }
+  }
+  function start(){
+    $('#cover').hidden=true;
+    const boot=()=>{player=new YT.Player('yt',{videoId:VIDEO,playerVars:{controls:0,rel:0,modestbranding:1,disablekb:1,fs:0,iv_load_policy:3,playsinline:1,cc_load_policy:0,start:0},
+      events:{onReady:()=>{player.unMute();player.setVolume(100);try{player.unloadModule('captions');player.unloadModule('cc')}catch(e){}showClip(0);poll=setInterval(tick,120)},
+              onStateChange:ev=>{if(ev.data===YT.PlayerState.ENDED)endIntro()},
+              onError:()=>{$('#cap').textContent='video wouldn\'t load here. skipping.';setTimeout(endIntro,1500)}}})};
+    if(window.YT&&YT.Player)boot();else{window.onYouTubeIframeAPIReady=boot;const s=document.createElement('script');s.src='https://www.youtube.com/iframe_api';s.onerror=()=>{$('#cap').textContent='no internet for the video. skipping.';setTimeout(endIntro,1200)};document.head.appendChild(s)}
+  }
+  $('#playbtn').onclick=e=>{e.stopPropagation();start()};
+  $('#cover').onclick=start;
+  $('#skipbtn').onclick=endIntro;
+  document.addEventListener('keydown',e=>{if(!intro.hidden&&(e.key==='Escape'||e.key==='s'||e.key==='S'))endIntro()});
+}
 })();
 </script>
 </body>
