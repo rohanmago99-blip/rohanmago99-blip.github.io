@@ -85,6 +85,10 @@ kbd{font-family:var(--mono);font-size:.9em;background:rgba(255,255,255,.1);borde
 #intro .frame{width:min(100%,calc((100vh - 160px) * 16 / 9));aspect-ratio:16/9;max-width:1500px;background:#000;border:2px solid rgba(233,189,85,.35);border-radius:14px;overflow:hidden;position:relative;box-shadow:0 0 60px rgba(0,0,0,.8)}
 #intro .frame .yt{position:absolute;left:-25%;width:150%;top:-25%;height:150%;border:0;pointer-events:none;opacity:0;transition:opacity .12s}
 #intro .frame .yt.show{opacity:1}
+#intro .frame .nov{position:absolute;inset:0;opacity:0;transition:opacity .4s;background:radial-gradient(ellipse at 30% 40%,rgba(233,189,85,.28),transparent 55%),radial-gradient(ellipse at 75% 70%,rgba(142,29,38,.5),transparent 60%),#120d18;background-size:160% 160%;animation:drift 9s ease-in-out infinite alternate}
+#intro .frame .nov.on{opacity:1}
+@keyframes drift{from{background-position:0% 0%}to{background-position:100% 100%}}
+#intro .cap.center{top:0;bottom:0;display:grid;place-items:center;font-size:clamp(34px,6vw,96px);color:var(--gold)}
 #intro .frame .yt iframe{width:100%;height:100%;border:0}
 #intro .vig{position:absolute;inset:0;pointer-events:none;background:radial-gradient(ellipse at center,transparent 55%,rgba(0,0,0,.75) 100%)}
 #intro .bars::before,#intro .bars::after{content:"";position:absolute;left:0;right:0;height:15%;background:#000;pointer-events:none;z-index:2}
@@ -137,7 +141,7 @@ kbd{font-family:var(--mono);font-size:.9em;background:rgba(255,255,255,.1);borde
 
 <div id="intro" hidden>
   <div class="frame" id="frame">
-    <div class="vig"></div><div class="bars" style="position:absolute;inset:0;pointer-events:none"></div>
+    <div class="nov" id="nov"></div><div class="vig"></div><div class="bars" style="position:absolute;inset:0;pointer-events:none"></div>
     <div class="shade" id="shade"></div>
     <div class="white" id="white"></div>
     <div class="ov" id="ovTitle" hidden><div class="big" id="tBig"></div><div class="small" id="tSmall"></div></div>
@@ -379,7 +383,7 @@ const intro=$('#intro');
 if(!seenIntro){
   intro.hidden=false;
   const total=SEQ.reduce((a,x)=>a+x.dur,0);let elapsed=0;
-  let ended=false,timer=0,actx=null,music=null;
+  let ended=false,timer=0,actx=null,music=null,videoFails=0;
   // ---- music (WebAudio): a steady synth bed in A minor, 104 bpm. Every cut lands on a beat. ----
   const BPM=104, BEAT=60/BPM;
   function mkMusic(){
@@ -448,15 +452,18 @@ if(!seenIntro){
     for(let k=i+1;k<Math.min(SEQ.length,i+4);k++){const nx=SEQ[k];if(nx.vid&&!nx.slot&&freeSlot())prepare(nx)}
     hideOv();
     if(i+1<SEQ.length&&SEQ[i+1].type==='title')snd('riser'); // riser swells into the next title card
-    if(it.type==='title'){$('#shade').classList.remove('off');$('#tBig').textContent=it.big;$('#tSmall').textContent=it.small;ov.title.hidden=false;music&&music.duck(0.9);flash()}
+    if(it.type==='title'){$('#nov').classList.remove('on');$('#shade').classList.remove('off');$('#tBig').textContent=it.big;$('#tSmall').textContent=it.small;ov.title.hidden=false;music&&music.duck(0.9);flash()}
     else if(it.type==='rohan'){$('#shade').classList.remove('off');ov.rohan.hidden=false;music&&music.duck(1.0);snd('slam');flash()}
     else{
       if(!it.slot)prepare(it);
-      if(it.slot){try{await Promise.race([it.slot.prepared,new Promise(r=>setTimeout(r,2600))])}catch(e){}}
+      if(it.slot&&videoFails<2){try{await Promise.race([it.slot.prepared,new Promise(r=>setTimeout(r,2600))])}catch(e){}}
       if(ended)return;
       const sl=it.slot;
-      if(sl&&!sl.err){try{sl.p.seekTo(it.s,true);sl.p.setVolume(100);if(sl.state!==1)sl.p.playVideo()}catch(e){}players.forEach(x=>x.el.classList.toggle('show',x===sl));$('#shade').classList.add('off')}
-      else{$('#shade').classList.remove('off')}
+      let live=false;
+      if(sl&&!sl.err&&videoFails<2){try{if(sl.state!==1)sl.p.playVideo();await new Promise(r=>setTimeout(r,sl.state===1?0:700));live=(sl.state===1);if(live){sl.p.seekTo(it.s,true);sl.p.setVolume(100)}}catch(e){}}
+      if(live){players.forEach(x=>x.el.classList.toggle('show',x===sl));$('#nov').classList.remove('on');$('#shade').classList.add('off')}
+      else{videoFails++;players.forEach(x=>x.el.classList.remove('show'));$('#nov').classList.add('on');$('#shade').classList.add('off')}
+      ov.cap.classList.toggle('center',!live);
       music&&music.duck(it.type==='word'?0.55:0.45); // music sits under the voices
       if(it.type==='card'){$('#cNo').textContent=it.no;$('#cNm').textContent=it.name;$('#cTg').textContent=it.tag;requestAnimationFrame(()=>ov.card.classList.add('in'))}
       if(it.type==='clip'){ov.cap.textContent=it.cap;ov.cap.hidden=false}
