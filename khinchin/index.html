@@ -104,7 +104,7 @@ kbd{font-family:var(--mono);font-size:.9em;background:rgba(255,255,255,.1);borde
 /* overlays */
 #intro .ov{position:absolute;inset:0;z-index:3;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;pointer-events:none;padding:4%}
 #intro .ov[hidden]{display:none}
-#intro .big{font-family:var(--display);color:var(--gold);line-height:1;text-shadow:0 4px 0 #6b4a0e,0 0 50px rgba(233,189,85,.6);font-size:clamp(34px,7.5vw,120px);letter-spacing:.03em}
+#intro .big{font-family:var(--display);color:var(--gold);line-height:1.05;text-shadow:0 4px 0 #6b4a0e,0 0 50px rgba(233,189,85,.6);font-size:clamp(30px,6vw,96px);letter-spacing:.03em;max-width:92%;text-wrap:balance}
 #intro .big.white{position:static;background:none;opacity:1;animation:none;color:var(--chalk);text-shadow:0 4px 0 #000}
 #intro .small{color:var(--muted);font-weight:900;letter-spacing:.22em;text-transform:uppercase;font-size:clamp(12px,1.4vw,20px);margin-top:14px}
 #intro .card{position:absolute;left:5%;bottom:19%;z-index:3;text-align:left;pointer-events:none;transform:translateX(-30px);opacity:0;transition:none}
@@ -153,8 +153,8 @@ kbd{font-family:var(--mono);font-size:.9em;background:rgba(255,255,255,.1);borde
     <div class="word" id="ovWord" hidden></div>
     <div class="rohan" id="ovRohan" hidden><div class="r1">ROHAN</div><div class="r2">your turn</div></div>
     <div class="cover" id="cover">
-      <div class="t1">ONE NUMBER</div>
-      <div class="t2">a math magic show · sound on</div>
+      <div class="t1">The Numberphile<br>Hall of Phame</div>
+      <div class="t2">sound on</div>
       <button class="play" id="playbtn">▶ Play</button>
     </div>
   </div>
@@ -415,7 +415,7 @@ const WORDS=[
 ];
 const SEQ=[];
 const B1=Math.round(60000/120),B2=2*B1,B3=3*B1,B4=4*B1,B8=8*B1; // 8 beats = 4 seconds
-SEQ.push({type:'title',big:'NUMBERPHILE',small:'the roster',dur:B4});
+SEQ.push({type:'title',big:'The Numberphile Hall of Phame',small:'',dur:B4*2});
 HOSTS.forEach((h,i)=>SEQ.push({type:'card',vid:h.vid,s:h.s,dur:B8,no:String(i+1).padStart(2,'0')+' / '+HOSTS.length,name:h.name,tag:h.tag}));
 SEQ.push({type:'title',big:'THE BIG ONES',small:'a few of the greatest hits',dur:B4});
 BIG.forEach(c=>SEQ.push({type:'clip',vid:c.vid,s:c.s,dur:B8,cap:c.cap}));
