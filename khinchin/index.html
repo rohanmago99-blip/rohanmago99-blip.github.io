@@ -417,8 +417,7 @@ const SEQ=[];
 const B1=Math.round(60000/120),B2=2*B1,B3=3*B1,B4=4*B1,B8=8*B1; // 8 beats = 4 seconds
 SEQ.push({type:'title',big:'The Numberphile Hall of Phame',small:'',dur:B4*2});
 HOSTS.forEach((h,i)=>SEQ.push({type:'card',vid:h.vid,s:h.s,dur:B8,no:String(i+1).padStart(2,'0')+' / '+HOSTS.length,name:h.name,tag:h.tag}));
-SEQ.push({type:'title',big:'THE BIG ONES',small:'a few of the greatest hits',dur:B4});
-BIG.forEach(c=>SEQ.push({type:'clip',vid:c.vid,s:c.s,dur:B8,cap:c.cap}));
+// (the greatest-hits montage was cut on Oct 29 2026; BIG is kept only as a list of good clips)
 SEQ.push({type:'title',big:'ONE MORE THING',small:'',dur:B4});
 WORDS.forEach(w=>SEQ.push({type:'word',vid:w.vid,s:w.s,dur:B1,cap:w.cap}));
 SEQ.push({type:'rohan',dur:B3*2});
