@@ -383,7 +383,7 @@ document.addEventListener('keydown',e=>{
 window.addEventListener('resize',()=>{if(state&&state.gm)drawChart(state.gm,state.finished?state.T:1,state.finished?state.hitAt:-1,state.T,!!state.finished);else drawChart([],0,-1,10,false)});
 reset();
 
-// ---------- opening edit: host cards, montage, word splice, ROHAN (official YouTube embeds; never the 2.685 video) ----------
+// ---------- opening edit: Hall of Phame title, host cards, "pass it onto you", RO-HAN, ROHAN (official YouTube embeds; never the 2.685 video) ----------
 const HOSTS=[
   {vid:'D8ntDpBm6Ok',s:40, name:'Brady Haran',     tag:'the voice behind the camera'},
   {vid:'aOT_bG-vWyg',s:60, name:'Matt Parker',     tag:'the stand-up mathematician'},
@@ -396,7 +396,7 @@ const HOSTS=[
   {vid:'6_yU9eJ0NxA',s:90, name:'Grant Sanderson', tag:'3blue1brown'},
   {vid:'rBU9E-ZOZAI',s:60, name:'Neil Sloane',     tag:'keeper of the sequences'},
 ];
-const BIG=[
+const BIG=[ // good clips, kept as a list (the greatest-hits montage was cut on Oct 29 2026)
   {vid:'XTeJ64KD5cg',s:95, cap:"Graham's Number"},
   {vid:'3P6DWAwwViU',s:120,cap:'TREE(3)'},
   {vid:'w-I6XTVZXww',s:150,cap:'1 + 2 + 3 + … = −1/12'},
@@ -406,20 +406,23 @@ const BIG=[
   {vid:'uezOrcmHzrQ',s:200,cap:'The Infinite Hotel'},
   {vid:'yJ-HwrOpIps',s:120,cap:'Pi'},
 ];
+// Word cuts from YouTube's own word-level caption timings. s = the word starts, e = its sound ends (the next word begins). caps = [seconds after s, caption].
 const WORDS=[
-  {vid:'yJ-HwrOpIps',s:458.3,dur:700,cap:'PASS'},
-  {vid:'XTeJ64KD5cg',s:11.7, dur:560,cap:'IT'},
-  {vid:'daro6K6mym8',s:393.5,dur:520,cap:'ON'},
-  {vid:'sj8Sg8qnjOg',s:475.4,dur:460,cap:'TO'},
-  {vid:'3P6DWAwwViU',s:381.9,dur:520,cap:'YOU'},
+  {vid:'yJ-HwrOpIps',s:458.32,e:458.72,caps:[[0,'PASS']]},              // Alex Bellos, Pi: "they PASS sort of every test"
+  {vid:'sj8Sg8qnjOg',s:655.98,e:656.67,caps:[[0,'IT'],[0.34,'ONTO']]},  // Ben Sparks, golden ratio: "rearrange IT ONTO one side"
+  {vid:'rBU9E-ZOZAI',s:443.80,e:444.40,caps:[[0,'YOU']]},               // Neil Sloane: "YOU can see it's getting more interesting"
+];
+const SYLLABLES=[ // the name, said out loud: "RO" (from "robot") + "HAN" (from "hand")
+  {vid:'-k3mVnRlQLU',s:281.36,e:281.64,cap:'RO'},     // Cliff Stoll: "my little forklift RObot"
+  {vid:'Lw-D8ThqWaE',s:317.40,e:317.74,cap:'ROHAN'},  // "I got to do the HANd."
 ];
 const SEQ=[];
 const B1=Math.round(60000/120),B2=2*B1,B3=3*B1,B4=4*B1,B8=8*B1; // 8 beats = 4 seconds
 SEQ.push({type:'title',big:'The Numberphile Hall of Phame',small:'',dur:B4*2});
-HOSTS.forEach((h,i)=>SEQ.push({type:'card',vid:h.vid,s:h.s,dur:B8,no:String(i+1).padStart(2,'0')+' / '+HOSTS.length,name:h.name,tag:h.tag}));
-// (the greatest-hits montage was cut on Oct 29 2026; BIG is kept only as a list of good clips)
+HOSTS.forEach((h,i)=>SEQ.push({type:'card',vid:h.vid,s:h.s,e:h.s+B8/1000,dur:B8,no:String(i+1).padStart(2,'0')+' / '+HOSTS.length,name:h.name,tag:h.tag}));
 SEQ.push({type:'title',big:'ONE MORE THING',small:'',dur:B4});
-WORDS.forEach(w=>SEQ.push({type:'word',vid:w.vid,s:w.s,dur:B1,cap:w.cap}));
+WORDS.forEach(w=>SEQ.push({type:'word',vid:w.vid,s:w.s,e:w.e,dur:Math.round((w.e-w.s)*1000),caps:w.caps}));
+SYLLABLES.forEach(l=>SEQ.push({type:'letter',vid:l.vid,s:l.s,e:l.e,dur:Math.round((l.e-l.s)*1000),cap:l.cap,acc:l.cap}));
 SEQ.push({type:'rohan',dur:B3*2});
 
 let seenIntro=false;try{seenIntro=sessionStorage.getItem('intro-seen')==='1'}catch(e){}
@@ -427,7 +430,7 @@ const intro=$('#intro');
 if(!seenIntro){
   intro.hidden=false;
   const total=SEQ.reduce((a,x)=>a+x.dur,0);let elapsed=0;
-  let ended=false,timer=0,actx=null,music=null,videoFails=0;
+  let ended=false,actx=null,music=null,videoFails=0;
   // ---- music (WebAudio): a steady synth bed in A minor, 104 bpm. Every cut lands on a beat. ----
   const BPM=120, BEAT=60/BPM;
   function mkMusic(){
@@ -467,60 +470,90 @@ if(!seenIntro){
   function snd(kind){ // kept for the sequence: titles get a riser, ROHAN gets the hit, ticks are silent (the beat carries the words)
     if(!music)return;if(kind==='riser')music.riser();if(kind==='slam')music.hit();
   }
-  // ---- player pool: pre-buffer the next clips so cuts are instant ----
-  const POOL=5;const players=[];// {el,p,ready,busy,item}
+  // ---- player pool: one player per clip, parked right before its cut ----
+  // prepare(): load the video PRE seconds before the cut, let it reach PLAYING, pause it there (parked: nothing decoding, nothing on screen).
+  // resume(): un-pause about LEAD seconds before the cut and watch getCurrentTime(); the cut happens the instant the player reaches s.
+  // Sound is on only between s and e, so no stray words. The picture may hold a beat longer while the next clip lines up.
+  const POOL=13, PRE=2.0, RUNWAY=0.9, PREP_LEAD=10, STAGGER=0.6, HOLD_MAX=0.5, LATE=0.08, L_EST=0.15;
+  const players=[];
+  const now=()=>performance.now()/1000;
   function mkPlayer(i){return new Promise(res=>{const el=document.createElement('div');el.className='yt';const inner=document.createElement('div');inner.id='yt'+i;el.appendChild(inner);$('#frame').insertBefore(el,$('#frame').firstChild);
-    const slot={el,p:null,busy:false,item:null,state:-1,onPlaying:null};
+    const slot={el,p:null,ready:false,busy:false,item:null,state:-1,sawPlaying:false,parked:false,parkPos:null,resumed:false,anchor:null,lastPos:null};
     slot.p=new YT.Player('yt'+i,{videoId:'D8ntDpBm6Ok',playerVars:{controls:0,rel:0,modestbranding:1,disablekb:1,fs:0,iv_load_policy:3,playsinline:1,cc_load_policy:0},
-      events:{onReady:()=>{try{slot.p.setVolume(0);slot.p.unloadModule('captions');slot.p.unloadModule('cc')}catch(e){}res(slot)},
-              onStateChange:ev=>{slot.state=ev.data;if(ev.data===YT.PlayerState.PLAYING&&slot.onPlaying){const f=slot.onPlaying;slot.onPlaying=null;f()}},
+      events:{onReady:()=>{slot.ready=true;try{slot.p.setVolume(0);slot.p.unloadModule('captions');slot.p.unloadModule('cc')}catch(e){}res(slot)},
+              onStateChange:ev=>{slot.state=ev.data;
+                if(ev.data===YT.PlayerState.PLAYING&&slot.item&&!slot.sawPlaying){slot.sawPlaying=true;if(!slot.resumed){try{slot.p.pauseVideo()}catch(e){}}}
+                if(ev.data===YT.PlayerState.PAUSED&&slot.item&&slot.sawPlaying&&!slot.resumed){slot.parked=true;try{slot.parkPos=slot.p.getCurrentTime()}catch(e){slot.parkPos=slot.item.s-PRE}}},
               onError:()=>{slot.err=true}}});
     players.push(slot)})}
-  function freeSlot(){return players.find(x=>!x.busy)}
-  function prepare(item){ // load + keep playing, muted and hidden
-    const slot=freeSlot();if(!slot)return null;slot.busy=true;slot.item=item;slot.err=false;
-    slot.prepared=new Promise(res=>{let done=false;const fin=()=>{if(done)return;done=true;res()};slot.onPlaying=fin;setTimeout(fin,4000); // keep it playing, muted + hidden: no pause → no resume overlay
-      try{slot.p.setVolume(0);slot.p.loadVideoById({videoId:item.vid,startSeconds:item.s});try{slot.p.unloadModule('captions');slot.p.unloadModule('cc')}catch(e){}}catch(e){fin()}});
-    item.slot=slot;return slot}
-  function release(slot){if(!slot)return;try{slot.p.setVolume(0)}catch(e){}slot.el.classList.remove('show');slot.busy=false;slot.item=null}
+  function freeSlot(){return players.find(x=>x.ready&&!x.busy)}
+  let lastPrep=-9;
+  function prepare(item){
+    const slot=freeSlot();if(!slot)return null;
+    slot.busy=true;slot.item=item;slot.err=false;slot.sawPlaying=false;slot.parked=false;slot.parkPos=null;slot.resumed=false;slot.anchor=null;slot.lastPos=null;
+    try{slot.p.setVolume(0);slot.p.loadVideoById({videoId:item.vid,startSeconds:Math.max(0,item.s-PRE)});try{slot.p.unloadModule('captions');slot.p.unloadModule('cc')}catch(e){}}catch(e){slot.err=true}
+    item.slot=slot;lastPrep=now();return slot}
+  function resume(item){const sl=item.slot;if(!sl||sl.resumed)return;sl.resumed=true;sl.anchor=null;sl.lastPos=null;try{if(sl.parked&&sl.parkPos!=null&&item.s-sl.parkPos<RUNWAY-0.2)sl.p.seekTo(Math.max(0,item.s-RUNWAY),true);sl.p.playVideo()}catch(e){}}
+  function track(sl){ // newest (wall time, video time) pair while the player is really moving
+    let pos;try{pos=sl.p.getCurrentTime()}catch(e){return}const t=now();
+    if(sl.lastPos!=null&&pos>sl.lastPos&&sl.state===1)sl.anchor={t,pos};
+    sl.lastPos=pos}
+  const eta=(sl,vt)=>sl&&sl.anchor?sl.anchor.t+(vt-sl.anchor.pos):Infinity; // wall time at which the player reaches video time vt
+  function release(slot){if(!slot)return;try{slot.p.setVolume(0);slot.p.pauseVideo()}catch(e){}slot.el.classList.remove('show');slot.busy=false;slot.item=null}
   // ---- overlays ----
   const ov={title:$('#ovTitle'),card:$('#ovCard'),cap:$('#ovCap'),word:$('#ovWord'),rohan:$('#ovRohan')};
   function hideOv(){ov.title.hidden=true;ov.card.classList.remove('in');ov.cap.hidden=true;ov.word.hidden=true;ov.rohan.hidden=true}
   function flash(){const w=$('#white');w.classList.remove('on');void w.offsetWidth;w.classList.add('on')}
-  function endIntro(){if(ended)return;ended=true;clearTimeout(timer);try{sessionStorage.setItem('intro-seen','1')}catch(e){}try{music&&music.stop()}catch(e){}players.forEach(sl=>{try{sl.p.stopVideo()}catch(e){}});intro.hidden=true;$('#num').focus()}
-  // ---- the sequence ----
-  async function play(i){
-    if(ended)return;if(i>=SEQ.length){endIntro();return}
-    const it=SEQ[i];
-    // keep the next few video items buffered
-    for(let k=i+1;k<Math.min(SEQ.length,i+4);k++){const nx=SEQ[k];if(nx.vid&&!nx.slot&&freeSlot())prepare(nx)}
+  let ticker=0;
+  function endIntro(){if(ended)return;ended=true;clearInterval(ticker);capTimers.forEach(clearTimeout);try{sessionStorage.setItem('intro-seen','1')}catch(e){}try{music&&music.stop()}catch(e){}players.forEach(sl=>{try{sl.p.stopVideo()}catch(e){}});intro.hidden=true;$('#num').focus()}
+  // ---- the sequence: a 20 ms tick drives everything ----
+  let idx=-1,cur=null,curEnd=0,curMuted=true,curLive=false,capTimers=[];
+  function projected(){const P=[];let t=curEnd;for(let k=idx+1;k<SEQ.length;k++){P[k]=t;t+=SEQ[k].dur/1000+(SEQ[k].vid?LATE:0)}return P}
+  function startItem(k,t){
+    if(cur&&cur.slot)release(cur.slot);capTimers.forEach(clearTimeout);capTimers=[];
+    if(idx>=0){elapsed+=SEQ[idx].dur;$('#prog').style.width=Math.round(100*elapsed/total)+'%'}
+    idx=k;cur=SEQ[k];curEnd=t+cur.dur/1000;curMuted=true;curLive=false;
     hideOv();
-    if(i+1<SEQ.length&&SEQ[i+1].type==='title')snd('riser'); // riser swells into the next title card
-    if(it.type==='title'){$('#nov').classList.remove('on');$('#shade').classList.remove('off');$('#tBig').textContent=it.big;$('#tSmall').textContent=it.small;ov.title.hidden=false;music&&music.duck(0.9);flash()}
-    else if(it.type==='rohan'){$('#shade').classList.remove('off');ov.rohan.hidden=false;music&&music.duck(1.0);snd('slam');flash()}
+    if(k+1<SEQ.length&&SEQ[k+1].type==='title')snd('riser'); // riser swells into the next title card
+    if(cur.type==='title'){$('#nov').classList.remove('on');$('#shade').classList.remove('off');$('#tBig').textContent=cur.big;$('#tSmall').textContent=cur.small;ov.title.hidden=false;music&&music.duck(0.9);flash()}
+    else if(cur.type==='rohan'){$('#shade').classList.remove('off');ov.rohan.hidden=false;music&&music.duck(1.0);snd('slam');flash()}
     else{
-      if(!it.slot)prepare(it);
-      if(it.slot&&videoFails<2){try{await Promise.race([it.slot.prepared,new Promise(r=>setTimeout(r,900))])}catch(e){}}
-      if(ended)return;
-      const sl=it.slot;
-      let live=false;
-      if(sl&&!sl.err&&videoFails<2){try{if(sl.state!==1)sl.p.playVideo();await new Promise(r=>setTimeout(r,sl.state===1?0:250));live=(sl.state===1);if(live){sl.p.seekTo(it.s,true);sl.p.setVolume(100)}}catch(e){}}
-      if(live){players.forEach(x=>x.el.classList.toggle('show',x===sl));$('#nov').classList.remove('on');$('#shade').classList.add('off')}
+      const sl=cur.slot;let live=false;
+      if(sl&&!sl.err&&videoFails<2&&sl.state===1){live=true;try{sl.p.setVolume(100)}catch(e){}}
+      try{(window.__introLog=window.__introLog||[]).push({k,type:cur.type,t:+t.toFixed(3),live,s:cur.s,arr:sl&&sl.anchor?+(eta(sl,cur.s)-t).toFixed(3):null,parked:!!(sl&&sl.parked),st:sl?sl.state:null})}catch(e){}
+      if(live){curLive=true;curMuted=false;players.forEach(x=>x.el.classList.toggle('show',x===sl));$('#nov').classList.remove('on');$('#shade').classList.add('off');if(sl.anchor)curEnd=eta(sl,cur.e)}
       else{videoFails++;players.forEach(x=>x.el.classList.remove('show'));$('#nov').classList.add('on');$('#shade').classList.add('off')}
       ov.cap.classList.toggle('center',!live);
-      music&&music.duck(it.type==='word'?0.55:0.45); // music sits under the voices
-      if(it.type==='card'){$('#cNo').textContent=it.no;$('#cNm').textContent=it.name;$('#cTg').textContent=it.tag;requestAnimationFrame(()=>ov.card.classList.add('in'))}
-      if(it.type==='clip'){ov.cap.textContent=it.cap;ov.cap.hidden=false}
-      if(it.type==='word'){ov.word.textContent=it.cap;ov.word.hidden=false}
+      music&&music.duck(cur.type==='card'?0.45:0.55); // music sits under the voices
+      if(cur.type==='card'){$('#cNo').textContent=cur.no;$('#cNm').textContent=cur.name;$('#cTg').textContent=cur.tag;requestAnimationFrame(()=>ov.card.classList.add('in'))}
+      if(cur.type==='clip'){ov.cap.textContent=cur.cap;ov.cap.hidden=false}
+      if(cur.type==='word'){ov.word.textContent=cur.caps[0][1];ov.word.hidden=false;cur.caps.slice(1).forEach(c=>capTimers.push(setTimeout(()=>{ov.word.textContent=c[1]},Math.round(c[0]*1000))))}
+      if(cur.type==='letter'){ov.word.textContent=cur.acc;ov.word.hidden=false}
     }
-    timer=setTimeout(()=>{if(it.slot)release(it.slot);elapsed+=it.dur;$('#prog').style.width=Math.round(100*elapsed/total)+'%';play(i+1)},it.dur);
+  }
+  function tick(){
+    if(ended)return;const t=now();
+    if(idx<0){startItem(0,t);return}
+    // sound off the moment the word ends
+    if(cur&&cur.slot&&curLive){const sl=cur.slot;track(sl);if(sl.anchor)curEnd=eta(sl,cur.e);if(!curMuted&&t>=curEnd-0.01){curMuted=true;try{sl.p.setVolume(0)}catch(e){}}}
+    const P=projected();
+    for(let k=idx+1;k<SEQ.length;k++){const it=SEQ[k];if(!it.vid)continue;
+      if(!it.slot){if(videoFails<2&&P[k]-t<=PREP_LEAD&&t-lastPrep>=STAGGER)prepare(it);continue}
+      const sl=it.slot;
+      if(!sl.resumed){let runway=(sl.parked&&sl.parkPos!=null)?it.s-sl.parkPos:PRE;if(runway<RUNWAY-0.2)runway=RUNWAY;if(t>=P[k]+LATE-L_EST-runway)resume(it)}
+      else track(sl)}
+    const nx=SEQ[idx+1];
+    if(!nx){if(t>=curEnd)endIntro();return}
+    if(nx.vid){const sl=nx.slot,ready=!!(sl&&sl.resumed&&eta(sl,nx.s)<=t),cant=!sl||sl.err||videoFails>=2;
+      if((ready&&t>=curEnd-0.1)||(t>=curEnd&&(cant||t>=curEnd+HOLD_MAX)))startItem(idx+1,t)}
+    else if(t>=curEnd)startItem(idx+1,t);
   }
   async function start(){
     $('#cover').hidden=true;$('#shade').classList.remove('off');$('#tBig').textContent='';ov.title.hidden=true;
     try{music=mkMusic()}catch(e){music=null}
-    const boot=async()=>{try{await Promise.race([Promise.all(Array.from({length:POOL},(_,i)=>mkPlayer(i))),new Promise((_,rej)=>setTimeout(()=>rej(new Error('yt timeout')),9000))])}catch(e){}
-      if(players.length===0){$('#tBig').textContent='no video here';$('#tSmall').textContent='skipping';ov.title.hidden=false;setTimeout(endIntro,1500);return}
-      play(0)};
+    const boot=()=>{ // the title needs no video: start now, players join the pool as they come up
+      for(let i=0;i<POOL;i++)setTimeout(()=>{if(!ended)mkPlayer(i)},i<3?0:300*(i-2));
+      ticker=setInterval(tick,20)};
     if(window.YT&&YT.Player)boot();else{window.onYouTubeIframeAPIReady=boot;const sc=document.createElement('script');sc.src='https://www.youtube.com/iframe_api';sc.onerror=()=>{$('#tBig').textContent='no internet for the video';$('#tSmall').textContent='skipping';ov.title.hidden=false;setTimeout(endIntro,1500)};document.head.appendChild(sc)}
   }
   $('#playbtn').onclick=e=>{e.stopPropagation();start()};
